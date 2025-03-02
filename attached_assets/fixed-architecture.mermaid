@@ -1,0 +1,140 @@
+flowchart TD
+    subgraph CoreInfrastructure["Core Infrastructure"]
+        SM[State Manager] --- TM[Task Manager]
+        SM --- HM[Hybrid Memory]
+        HM --- VS[Vector Store]
+        FS[Flow System] --- SM
+        FS --- TM
+        Logger --- SM
+        Logger --- TM
+        Logger --- HM
+    end
+
+    subgraph DataLayer["Data Layer"]
+        IA[Ingestion Agent] --> HM
+        
+        subgraph IngestionHandlers["Ingestion Handlers"]
+            API_H[API Handler]
+            File_H[File Handler]
+            DB_H[Database Handler]
+            Custom_H[Custom Handler]
+        end
+        
+        IA --> API_H
+        IA --> File_H
+        IA --> DB_H
+        IA --> Custom_H
+        
+        DataValidator <--> IA
+    end
+
+    subgraph AnalysisLayer["Analysis Layer"]
+        AA[Analysis Agent] <--> HM
+        IA --> AA
+        
+        subgraph AnalysisTypes["Analysis Types"]
+            StatA[Statistical Analysis]
+            PatA[Pattern Analysis]
+            TempA[Temporal Analysis]
+            CorA[Correlation Analysis]
+            AnoA[Anomaly Detection]
+        end
+        
+        AA --> StatA
+        AA --> PatA
+        AA --> TempA
+        AA --> CorA
+        AA --> AnoA
+    end
+
+    subgraph StrategyLayer["Strategy Layer"]
+        SA[Retail Strategy Agent] <--> HM
+        AA --> SA
+        
+        KB[Strategy Knowledge Base] <--> SA
+        SME[SME Trainer] --> KB
+        
+        subgraph CampaignTypes["Campaign Types"]
+            Season[Seasonal Sale]
+            NewCol[New Collection]
+            Loyal[Loyalty Rewards]
+            Store[Store Opening]
+            Clear[Clearance]
+            Cat[Category Focus]
+        end
+        
+        SA --> Season
+        SA --> NewCol
+        SA --> Loyal
+        SA --> Store
+        SA --> Clear
+        SA --> Cat
+        
+        RA[RAG Strategy Advisor] <--> SA
+        RA <--> HM
+        RA <--> LLM[LLM Manager]
+    end
+
+    subgraph CreativeLayer["Creative Layer"]
+        CA[Creative Agent] <--> HM
+        SA --> CA
+        
+        subgraph CreativeModes["Creative Modes"]
+            Story[Story Mode]
+            Art[Art Direction]
+            Problem[Problem Solving]
+            Brain[Brainstorming]
+            Poetry[Poetry Mode]
+        end
+        
+        CA --> Story
+        CA --> Art
+        CA --> Problem
+        CA --> Brain
+        CA --> Poetry
+    end
+
+    subgraph ExecutionLayer["Execution Layer"]
+        EA[Execution Agent] <--> HM
+        CA --> EA
+    end
+
+    subgraph ExternalSystems["External Systems"]
+        APIs[External APIs] --> IA
+        DataSrc[Data Sources] --> IA
+        CRM[CRM Systems] <--> EA
+    end
+
+    subgraph FrontEnd["Front End"]
+        UI[User Interface] <--> API_GW[API Gateway]
+        API_GW <--> SM
+        API_GW <--> HM
+        
+        subgraph UserComponents["User Components"]
+            DASH[Dashboard] --- UI
+            CAMP[Campaign Manager] --- UI
+            INS[Insights Viewer] --- UI
+            CRE[Creative Editor] --- UI
+            SET[Settings Panel] --- UI
+        end
+    end
+
+    classDef infrastructure fill:#e6f7ff,stroke:#1890ff
+    classDef data fill:#f6ffed,stroke:#52c41a
+    classDef analysis fill:#e6fffb,stroke:#13c2c2
+    classDef strategy fill:#fff7e6,stroke:#fa8c16
+    classDef creative fill:#f9f0ff,stroke:#722ed1
+    classDef execution fill:#fff1f0,stroke:#f5222d
+    classDef external fill:#f0f2f5,stroke:#8c8c8c
+    classDef frontend fill:#f0f5ff,stroke:#597ef7
+    classDef usercomp fill:#f9f0ff,stroke:#9254de
+
+    class SM,TM,HM,VS,FS,Logger infrastructure
+    class IA,API_H,File_H,DB_H,Custom_H,DataValidator data
+    class AA,StatA,PatA,TempA,CorA,AnoA analysis
+    class SA,KB,SME,RA,LLM,Season,NewCol,Loyal,Store,Clear,Cat strategy
+    class CA,Story,Art,Problem,Brain,Poetry creative
+    class EA execution
+    class APIs,DataSrc,CRM external
+    class UI,API_GW frontend
+    class DASH,CAMP,INS,CRE,SET usercomp
