@@ -1,0 +1,62 @@
+```mermaid
+graph TB
+    subgraph HomePage["Marketing Campaign Dashboard"]
+        Strategy["Strategy Conversation Interface"]
+        DataIngestion["Data Ingestion Interface"]
+        Analysis["Analysis Interface"]
+    end
+
+    subgraph StrategyLayer["Strategy Layer"]
+        Strategy --> |"Define Objectives"| Objectives
+        Objectives --> |"Stage-specific goals"| Lifecycle["Lifecycle Stages"]
+        Lifecycle -->|"Handoff to"| DataIngestion
+        
+        subgraph Lifecycle
+            L1["Prospecting"]
+            L2["Ownership"]
+            L3["InLife"]
+            L4["Risky"]
+            L5["Churn"]
+        end
+    end
+
+    subgraph DataIngestionLayer["Data Ingestion Layer"]
+        DataIngestion --> |"Upload"| Sources
+        Sources --> |"Process"| Validation
+        Validation --> |"Transform"| Storage
+        
+        subgraph Sources
+            S1["File Upload"]
+            S2["API Connection"]
+            S3["Database"]
+        end
+    end
+
+    subgraph AnalysisLayer["Analysis Layer"]
+        Storage --> |"Load"| Analysis
+        Analysis --> |"Generate"| Insights
+        Analysis --> |"Visualize"| Charts
+        Analysis --> |"Interactive"| Assistant
+        
+        subgraph Charts
+            C1["Customer Journey"]
+            C2["Segment Distribution"]
+            C3["Churn Analysis"]
+            C4["Engagement Metrics"]
+        end
+        
+        subgraph Insights
+            I1["Key Metrics"]
+            I2["Trend Analysis"]
+            I3["Recommendations"]
+        end
+    end
+
+    classDef interface fill:#f9f,stroke:#333,stroke-width:2px
+    classDef layer fill:#dfd,stroke:#333,stroke-width:2px
+    classDef component fill:#fff,stroke:#333,stroke-width:1px
+    
+    class Strategy,DataIngestion,Analysis interface
+    class StrategyLayer,DataIngestionLayer,AnalysisLayer layer
+    class Sources,Charts,Insights,Lifecycle component
+```

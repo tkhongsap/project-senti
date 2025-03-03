@@ -1,0 +1,676 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
+  Legend, ResponsiveContainer 
+} from 'recharts';
+import { 
+  ChevronDown, Download, Filter, Users, Target, TrendingUp, 
+  Calendar, Search, AlertCircle, Zap, MessageSquare, 
+  ArrowRight, ChevronRight, RefreshCw, FileText, CheckCircle
+} from 'lucide-react';
+
+const AnalysisInterface = ({ objectives, uploadedData }) => {
+  const [activeLifecycleStage, setActiveLifecycleStage] = useState('overview');
+  const [generatingInsights, setGeneratingInsights] = useState(true);
+  const [insightsProgress, setInsightsProgress] = useState(0);
+  const [insights, setInsights] = useState([]);
+  const [showConversation, setShowConversation] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [userInput, setUserInput] = useState('');
+  const messagesEndRef = useRef(null);
+
+  // Lifecycle stages definitions
+  const lifecycleStages = {
+    overview: 'Full Customer Lifecycle View',
+    prospecting: 'Attracting and engaging potential customers',
+    ownership: 'Initial customer onboarding and relationship building',
+    inlife: 'Deepening relationships with active customers',
+    risky: 'Addressing customers showing signs of dissatisfaction',
+    churn: 'Re-engaging customers who have left or are about to leave'
+  };
+
+  // Color schemes for different lifecycle stages
+  const stageColors = {
+    prospecting: '#3B82F6', // blue
+    ownership: '#10B981', // green
+    inlife: '#6366F1',   // indigo
+    risky: '#F59E0B',    // amber
+    churn: '#EF4444'     // red
+  };
+
+  // Mock data for different charts
+  const segmentDistributionData = [
+    { name: 'High-Value', value: 3218, color: '#3B82F6' },
+    { name: 'Regular', value: 7878, color: '#10B981' },
+    { name: 'New', value: 2105, color: '#6366F1' },
+    { name: 'At-Risk', value: 1893, color: '#F59E0B' },
+    { name: 'Churned', value: 748, color: '#EF4444' }
+  ];
+
+  const customerJourneyData = [
+    { month: 'Jan', prospecting: 1200, ownership: 850, inlife: 4500, risky: 950, churn: 350 },
+    { month: 'Feb', prospecting: 1300, ownership: 940, inlife: 4600, risky: 930, churn: 380 },
+    { month: 'Mar', prospecting: 1400, ownership: 1020, inlife: 4700, risky: 900, churn: 340 },
+    { month: 'Apr', prospecting: 1350, ownership: 1100, inlife: 4800, risky: 850, churn: 320 },
+    { month: 'May', prospecting: 1500, ownership: 1150, inlife: 4900, risky: 820, churn: 300 },
+    { month: 'Jun', prospecting: 1600, ownership: 1250, inlife: 5000, risky: 800, churn: 280 }
+  ];
+
+  const engagementData = [
+    { name: 'Very Low', value: 1245 },
+    { name: 'Low', value: 2890 },
+    { name: 'Medium', value: 5632 },
+    { name: 'High', value: 4210 },
+    { name: 'Very High', value: 1865 }
+  ];
+
+  const prospectingData = [
+    { channel: 'Social Media', leads: 450, conversionRate: 3.2, color: '#3B82F6' },
+    { channel: 'Search', leads: 320, conversionRate: 4.1, color: '#10B981' },
+    { channel: 'Email', leads: 180, conversionRate: 2.5, color: '#6366F1' },
+    { channel: 'Referral', leads: 290, conversionRate: 5.7, color: '#F59E0B' },
+    { channel: 'Direct', leads: 210, conversionRate: 3.9, color: '#EF4444' }
+  ];
+
+  const churnRateData = [
+    { month: 'Jan', rate: 2.4 },
+    { month: 'Feb', rate: 2.2 },
+    { month: 'Mar', rate: 2.5 },
+    { month: 'Apr', rate: 2.3 },
+    { month: 'May', rate: 1.9 },
+    { month: 'Jun', rate: 1.7 }
+  ];
+
+  // Simulate analysis generation
+  useEffect(() => {
+    if (generatingInsights) {
+      const timer = setInterval(() => {
+        setInsightsProgress((prevProgress) => {
+          if (prevProgress >= 100) {
+            clearInterval(timer);
+            setGeneratingInsights(false);
+            generateInsights();
+            // Trigger initial analysis agent message
+            setTimeout(() => {
+              setMessages([
+                {
+                  sender: 'agent',
+                  content: "I've analyzed the customer data based on your campaign objectives. I've identified several key insights across the customer lifecycle. You can explore each lifecycle stage in detail or ask me specific questions about the analysis.",
+                  timestamp: new Date()
+                }
+              ]);
+              setShowConversation(true);
+            }, 1000);
+            return 100;
+          }
+          return prevProgress + 2;
+        });
+      }, 150);
+      
+      return () => clearInterval(timer);
+    }
+  }, [generatingInsights]);
+
+  // Auto-scroll for messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const generateInsights = () => {
+    // These would be dynamically generated based on actual analysis
+    const generatedInsights = [
+      {
+        id: 1,
+        stage: 'prospecting',
+        title: 'Social media leads have 23% higher lifetime value',
+        description: 'Customers acquired through social media campaigns show significantly higher lifetime value compared to other channels.',
+        impact: 'high',
+        confidence: 0.85,
+        relatedObjective: objectives?.prospecting
+      },
+      {
+        id: 2,
+        stage: 'ownership',
+        title: '68% of new customers don't complete onboarding',
+        description: 'A majority of new customers aren't completing the full onboarding sequence, particularly dropping off at the account customization step.',
+        impact: 'high',
+        confidence: 0.92,
+        relatedObjective: objectives?.ownership
+      },
+      {
+        id: 3,
+        stage: 'inlife',
+        title: 'Cross-selling opportunity in premium segment',
+        description: 'Premium segment customers show strong affinity for complementary products after 3 months of initial purchase.',
+        impact: 'medium',
+        confidence: 0.78,
+        relatedObjective: objectives?.inlife
+      },
+      {
+        id: 4,
+        stage: 'risky',
+        title: 'Usage drop precedes churn by 45 days on average',
+        description: 'Customer usage metrics show a clear declining pattern approximately 45 days before churn occurs.',
+        impact: 'high',
+        confidence: 0.88,
+        relatedObjective: objectives?.risky
+      },
+      {
+        id: 5,
+        stage: 'churn',
+        title: '27% of churned customers return within 90 days',
+        description: 'Over a quarter of churned customers return within 90 days when targeted with specialized win-back campaigns.',
+        impact: 'medium',
+        confidence: 0.82,
+        relatedObjective: objectives?.churn
+      },
+      {
+        id: 6,
+        stage: 'prospecting',
+        title: 'Lead quality peaks on Tuesdays and Wednesdays',
+        description: 'Lead generation efforts yield highest quality prospects during midweek, with 34% higher conversion rates.',
+        impact: 'medium',
+        confidence: 0.76,
+        relatedObjective: objectives?.prospecting
+      },
+      {
+        id: 7,
+        stage: 'inlife',
+        title: 'Customers engaging with knowledge base have 54% higher retention',
+        description: 'Active engagement with the product knowledge base is strongly correlated with long-term retention.',
+        impact: 'high',
+        confidence: 0.91,
+        relatedObjective: objectives?.inlife
+      },
+      {
+        id: 8,
+        stage: 'risky',
+        title: 'Price sensitivity highest in 6-12 month segment',
+        description: 'Customers between 6-12 months of tenure show the highest price sensitivity and are most responsive to retention offers.',
+        impact: 'medium',
+        confidence: 0.79,
+        relatedObjective: objectives?.risky
+      }
+    ];
+    
+    setInsights(generatedInsights);
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (userInput.trim() === '') return;
+
+    // Add user message
+    setMessages(prevMessages => [
+      ...prevMessages,
+      {
+        sender: 'user',
+        content: userInput,
+        timestamp: new Date()
+      }
+    ]);
+    
+    // Store question to respond to
+    const question = userInput;
+    setUserInput('');
+    
+    // Simulate agent thinking and response
+    setTimeout(() => {
+      const response = generateAnalysisResponse(question);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          sender: 'agent',
+          content: response,
+          timestamp: new Date()
+        }
+      ]);
+    }, 1000);
+  };
+
+  const generateAnalysisResponse = (question) => {
+    // This would connect to your actual analysis agent in a real implementation
+    
+    // Simple keyword matching for demo purposes
+    const questionLower = question.toLowerCase();
+    
+    if (questionLower.includes('prospecting') || questionLower.includes('leads')) {
+      return "Based on my analysis of the prospecting stage, social media has been your most effective lead generation channel with 450 leads and a 3.2% conversion rate. However, referrals show the highest quality with a 5.7% conversion rate. This aligns with your objective to \"" + objectives?.prospecting + "\". I recommend focusing more resources on your referral program while optimizing social media campaigns for higher conversion.";
+    }
+    
+    if (questionLower.includes('churn') || questionLower.includes('retention')) {
+      return "Looking at your churn data, I've found that churn rates have been declining over the past 6 months, from 2.4% to 1.7%. This positive trend suggests your retention efforts are working. The analysis shows that 27% of churned customers return within 90 days when targeted appropriately. To further address your objective to \"" + objectives?.churn + "\", I recommend implementing an early warning system based on the 45-day usage decline pattern we've identified.";
+    }
+    
+    if (questionLower.includes('segment') || questionLower.includes('segments')) {
+      return "I've identified 5 key customer segments in your data: High-Value (3,218), Regular (7,878), New (2,105), At-Risk (1,893), and Churned (748). The High-Value segment represents 20.3% of your customer base but contributes 47.5% of your revenue. This segment shows strong alignment with your inlife objective to \"" + objectives?.inlife + "\". I recommend developing targeted engagement strategies for the High-Value segment while implementing preventive measures for the At-Risk segment.";
+    }
+    
+    if (questionLower.includes('recommendation') || questionLower.includes('suggest')) {
+      return "Based on the complete analysis, my top 3 recommendations are:\n\n1. Enhance your onboarding process to address the 68% drop-off rate, which will directly support your ownership objective to \"" + objectives?.ownership + "\"\n\n2. Implement an early warning system to identify at-risk customers 45 days before likely churn\n\n3. Increase investment in your referral program, which shows the highest conversion rate (5.7%) among prospecting channels";
+    }
+    
+    // Default response
+    return "Based on my analysis of your customer data across the lifecycle, I've found several insights relevant to your objectives. The data shows strong performance in the inlife stage, with opportunities for improvement in the ownership and risky stages. Customer engagement levels vary significantly across segments, with 26.6% showing high engagement. Would you like me to explore a specific lifecycle stage or metric in more detail?";
+  };
+
+  // Render the top stats section
+  const renderTopStats = () => {
+    return (
+      <div className="grid grid-cols-5 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-gray-500 text-sm">Total Customers</h3>
+            <Users size={20} className="text-indigo-500" />
+          </div>
+          <p className="text-2xl font-semibold">15,842</p>
+          <p className="text-xs text-green-500 mt-1">↑ 8.2% from last period</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-gray-500 text-sm">Customer Segments</h3>
+            <Users size={20} className="text-emerald-500" />
+          </div>
+          <p className="text-2xl font-semibold">5</p>
+          <p className="text-xs text-gray-500 mt-1">Across lifecycle stages</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-gray-500 text-sm">Avg. Lifetime Value</h3>
+            <Target size={20} className="text-blue-500" />
+          </div>
+          <p className="text-2xl font-semibold">$840</p>
+          <p className="text-xs text-green-500 mt-1">↑ 12.4% from last period</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-gray-500 text-sm">Churn Rate</h3>
+            <TrendingUp size={20} className="text-amber-500" />
+          </div>
+          <p className="text-2xl font-semibold">1.7%</p>
+          <p className="text-xs text-green-500 mt-1">↓ 0.7% from last period</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-gray-500 text-sm">Key Insights</h3>
+            <Zap size={20} className="text-purple-500" />
+          </div>
+          <p className="text-2xl font-semibold">8</p>
+          <p className="text-xs text-gray-500 mt-1">Across all stages</p>
+        </div>
+      </div>
+    );
+  };
+
+  // Render customer journey visualization
+  const renderCustomerJourney = () => {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Customer Lifecycle Distribution</h2>
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={customerJourneyData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Area 
+                type="monotone" 
+                dataKey="prospecting" 
+                stackId="1"
+                stroke={stageColors.prospecting} 
+                fill={stageColors.prospecting} 
+              />
+              <Area 
+                type="monotone" 
+                dataKey="ownership" 
+                stackId="1"
+                stroke={stageColors.ownership} 
+                fill={stageColors.ownership} 
+              />
+              <Area 
+                type="monotone" 
+                dataKey="inlife" 
+                stackId="1"
+                stroke={stageColors.inlife} 
+                fill={stageColors.inlife} 
+              />
+              <Area 
+                type="monotone" 
+                dataKey="risky" 
+                stackId="1"
+                stroke={stageColors.risky} 
+                fill={stageColors.risky} 
+              />
+              <Area 
+                type="monotone" 
+                dataKey="churn" 
+                stackId="1"
+                stroke={stageColors.churn} 
+                fill={stageColors.churn} 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // Render segment distribution
+  const renderSegmentDistribution = () => {
+    return (
+      <div className="grid grid-cols-3 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-4 col-span-1">
+          <h2 className="text-lg font-semibold mb-4">Customer Segments</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={segmentDistributionData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {segmentDistributionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value} customers`, 'Count']} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4 col-span-2">
+          <h2 className="text-lg font-semibold mb-4">Customer Engagement Levels</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={engagementData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" name="Customers" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render stage-specific charts
+  const renderStageCharts = () => {
+    if (activeLifecycleStage === 'overview') {
+      return (
+        <>
+          {renderCustomerJourney()}
+          {renderSegmentDistribution()}
+        </>
+      );
+    }
+    
+    if (activeLifecycleStage === 'prospecting') {
+      return (
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold mb-4">Lead Generation by Channel</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={prospectingData}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="channel" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="leads" name="Number of Leads" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold mb-4">Conversion Rate by Channel</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={prospectingData}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="channel" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="conversionRate" name="Conversion Rate (%)" fill="#10B981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    if (activeLifecycleStage === 'churn') {
+      return (
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold mb-4">Churn Rate Trend</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={churnRateData}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value}%`, 'Churn Rate']} />
+                  <Legend />
+                  <Line type="monotone" dataKey="rate" stroke="#EF4444" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold mb-4">Churn Reasons</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Price', value: 35, color: '#EF4444' },
+                      { name: 'Competitor', value: 25, color: '#F59E0B' },
+                      { name: 'Features', value: 20, color: '#3B82F6' },
+                      { name: 'Poor Service', value: 15, color: '#10B981' },
+                      { name: 'Other', value: 5, color: '#6366F1' }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {[
+                      { name: 'Price', value: 35, color: '#EF4444' },
+                      { name: 'Competitor', value: 25, color: '#F59E0B' },
+                      { name: 'Features', value: 20, color: '#3B82F6' },
+                      { name: 'Poor Service', value: 15, color: '#10B981' },
+                      { name: 'Other', value: 5, color: '#6366F1' }
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // Default visualization for other stages
+    return (
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold mb-4">{activeLifecycleStage.charAt(0).toUpperCase() + activeLifecycleStage.slice(1)} Metrics</h2>
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">Select specific metrics to visualize</p>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold mb-4">Key Performance Indicators</h2>
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">Select specific KPIs to visualize</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render insights
+  const renderInsights = () => {
+    // Filter insights for the selected lifecycle stage
+    const filteredInsights = activeLifecycleStage === 'overview' 
+      ? insights 
+      : insights.filter(insight => insight.stage === activeLifecycleStage);
+    
+    return (
+      <div className="bg-white rounded-lg shadow mb-6">
+        <div className="border-b p-4 flex justify-between items-center">
+          <h2 className="text-lg font-semibold">
+            {activeLifecycleStage === 'overview' ? 'Key Insights Across Lifecycle' : `${activeLifecycleStage.charAt(0).toUpperCase() + activeLifecycleStage.slice(1)} Stage Insights`}
+          </h2>
+          <button className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
+            <RefreshCw size={14} className="mr-1" />
+            Refresh Insights
+          </button>
+        </div>
+        
+        <div className="divide-y">
+          {filteredInsights.length > 0 ? (
+            filteredInsights.map(insight => (
+              <div key={insight.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-start">
+                  <Zap size={20} className={`mr-3 mt-1 ${
+                    insight.impact === 'high' 
+                      ? 'text-red-500' 
+                      : insight.impact === 'medium' 
+                        ? 'text-amber-500' 
+                        : 'text-blue-500'
+                  }`} />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{insight.title}</h3>
+                    <p className="text-gray-600 mt-1">{insight.description}</p>
+                    {insight.relatedObjective && (
+                      <div className="mt-2 text-sm text-indigo-600">
+                        <span className="font-medium">Related objective:</span> "{insight.relatedObjective}"
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center text-sm text-gray-500">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        insight.impact === 'high' 
+                          ? 'bg-red-100 text-red-800' 
+                          : insight.impact === 'medium' 
+                            ? 'bg-amber-100 text-amber-800' 
+                            : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {insight.impact.toUpperCase()} IMPACT
+                      </span>
+                      <span className="ml-3">
+                        {Math.round(insight.confidence * 100)}% confidence
+                      </span>
+                      <span className="ml-3 capitalize">
+                        {insight.stage} stage
+                      </span>
+                    </div>
+                  </div>
+                  <button className="text-gray-400 hover:text-gray-600">
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 text-center text-gray-500">
+              No insights available for this lifecycle stage
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Render conversation interface
+  const renderConversation = () => {
+    return (
+      <div className={`fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${showConversation ? 'h-96' : 'h-12'}`}>
+        <div 
+          className="bg-indigo-600 text-white p-3 flex justify-between items-center cursor-pointer"
+          onClick={() => setShowConversation(!showConversation)}
+        >
+          <div className="flex items-center">
+            <MessageSquare size={16} className="mr-2" />
+            <h3 className="font-medium">Analysis Assistant</h3>
+          </div>
+          <div className="flex items-center">
+            {showConversation ? (
+              <ChevronDown size={20} />
+            ) : (
+              <div className="animate-pulse bg-white rounded-full h-2 w-2"></div>
+            )}
+          </div>
+        </div>
+        
+        {showConversation && (
+          <>
+            <div className="h-64 overflow-y-auto p-3 bg-gray-50">
+              {messages.map((message, index) => (
+                <div 
+                  key={index} 
+                  className={`mb-3 flex ${
