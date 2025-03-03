@@ -5,6 +5,7 @@ import { DataGrid } from "@/components/dashboard/data-grid";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { StrategyConversationInterface } from "@/components/strategy/StrategyConversationInterface";
+import { AnalysisInterface } from "@/components/strategy/AnalysisInterface";
 import { calculateBasicStats, identifyTrends } from "@/lib/analysis";
 import { DataPoint } from "@shared/schema";
 import { BarChart3, LogOut, TrendingUp, Trophy, Upload } from "lucide-react";
@@ -20,6 +21,15 @@ export default function HomePage() {
   const trends = identifyTrends(dataPoints);
   const latestTrend = trends[trends.length - 1]?.trend || "stable";
 
+  // Mock objectives for demo
+  const objectives = {
+    prospecting: "Increase qualified lead generation by 25% through targeted social media campaigns",
+    ownership: "Improve new customer onboarding completion rate to 85%",
+    inlife: "Boost customer engagement and product adoption rates by 30%",
+    risky: "Reduce customer churn risk by identifying early warning signs",
+    churn: "Implement targeted win-back campaigns with 20% success rate"
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -34,6 +44,8 @@ export default function HomePage() {
 
       <main className="container py-8 space-y-8">
         <StrategyConversationInterface />
+
+        <AnalysisInterface objectives={objectives} />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
