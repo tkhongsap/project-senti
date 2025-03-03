@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DataGrid } from "@/components/dashboard/data-grid";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
-import { UploadForm } from "@/components/data-ingestion/upload-form";
+import { DataIngestionInterface } from "@/components/data-ingestion/DataIngestionInterface";
 import { calculateBasicStats, identifyTrends } from "@/lib/analysis";
 import { DataPoint } from "@shared/schema";
 import { BarChart3, LogOut, TrendingUp, Trophy, Upload } from "lucide-react";
@@ -33,7 +33,7 @@ export default function HomePage() {
       </header>
 
       <main className="container py-8 space-y-8">
-        <UploadForm />
+        <DataIngestionInterface />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard

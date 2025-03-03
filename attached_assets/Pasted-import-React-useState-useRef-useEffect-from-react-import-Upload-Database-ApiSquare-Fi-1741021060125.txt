@@ -1,0 +1,640 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Database, ApiSquare, FileText, Check, AlertCircle, X, ChevronRight, Settings, HelpCircle } from 'lucide-react';
+
+const DataIngestionInterface = () => {
+  const [activeTab, setActiveTab] = useState('file');
+  const [dragActive, setDragActive] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState(null); // 'validating', 'processing', 'complete', 'error'
+  const [validationResults, setValidationResults] = useState([]);
+  const [mappedFields, setMappedFields] = useState({});
+  const [activeStep, setActiveStep] = useState(1); // 1: Source, 2: Configuration, 3: Validation
+  
+  const fileInputRef = useRef(null);
+
+  // Simulate a file processing sequence
+  useEffect(() => {
+    if (files.length > 0 && uploadStatus === 'validating') {
+      const timer = setTimeout(() => {
+        setUploadStatus('processing');
+        setValidationResults([
+          { type: 'success', message: 'File format is valid' },
+          { type: 'success', message: 'All required columns present' },
+          { type: 'warning', message: '15% of records have missing values' },
+          { type: 'info', message: 'Detected 5 potential customer segments' }
+        ]);
+        
+        // Simulate processing progress
+        let progress = 0;
+        const progressTimer = setInterval(() => {
+          progress += 5;
+          setUploadProgress(progress);
+          
+          if (progress >= 100) {
+            clearInterval(progressTimer);
+            setUploadStatus('complete');
+          }
+        }, 300);
+        
+        // Simulate field mapping
+        setMappedFields({
+          'customer_id': 'CustomerID',
+          'email': 'EmailAddress',
+          'purchase_date': 'Transaction.Date',
+          'amount': 'Transaction.Value',
+          'product_category': 'ProductCategory',
+          'channel': 'PurchaseChannel'
+        });
+        
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [files, uploadStatus]);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleFiles = (fileList) => {
+    setFiles(Array.from(fileList));
+    setUploadStatus('validating');
+    setUploadProgress(0);
+    setActiveStep(2);
+  };
+
+  const onButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const proceedToAnalysis = () => {
+    // In a real application, this would submit the data and start analysis
+    alert('Data ingestion completed. Proceeding to analysis...');
+  };
+  
+  const renderSteps = () => {
+    return (
+      <div className="flex mb-8">
+        <div className={`flex items-center ${activeStep >= 1 ? 'text-indigo-600' : 'text-gray-400'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep >= 1 ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+            <span className="font-semibold">1</span>
+          </div>
+          <span className="ml-2 font-medium">Data Source</span>
+        </div>
+        
+        <div className="mx-4 flex items-center">
+          <ChevronRight size={20} className="text-gray-400" />
+        </div>
+        
+        <div className={`flex items-center ${activeStep >= 2 ? 'text-indigo-600' : 'text-gray-400'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep >= 2 ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+            <span className="font-semibold">2</span>
+          </div>
+          <span className="ml-2 font-medium">Configuration</span>
+        </div>
+        
+        <div className="mx-4 flex items-center">
+          <ChevronRight size={20} className="text-gray-400" />
+        </div>
+        
+        <div className={`flex items-center ${activeStep >= 3 ? 'text-indigo-600' : 'text-gray-400'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep >= 3 ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+            <span className="font-semibold">3</span>
+          </div>
+          <span className="ml-2 font-medium">Validation</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSourceSelection = () => {
+    return (
+      <div className="flex space-x-4 mb-6">
+        <button 
+          className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'file' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}
+          onClick={() => setActiveTab('file')}
+        >
+          <FileText size={24} className={activeTab === 'file' ? 'text-indigo-500' : 'text-gray-500'} />
+          <div className="text-left">
+            <p className={`font-medium ${activeTab === 'file' ? 'text-indigo-500' : 'text-gray-700'}`}>File Upload</p>
+            <p className="text-xs text-gray-500">CSV, Excel, JSON</p>
+          </div>
+        </button>
+        
+        <button 
+          className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'api' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}
+          onClick={() => setActiveTab('api')}
+        >
+          <ApiSquare size={24} className={activeTab === 'api' ? 'text-indigo-500' : 'text-gray-500'} />
+          <div className="text-left">
+            <p className={`font-medium ${activeTab === 'api' ? 'text-indigo-500' : 'text-gray-700'}`}>API Connection</p>
+            <p className="text-xs text-gray-500">REST, GraphQL</p>
+          </div>
+        </button>
+        
+        <button 
+          className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'database' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}
+          onClick={() => setActiveTab('database')}
+        >
+          <Database size={24} className={activeTab === 'database' ? 'text-indigo-500' : 'text-gray-500'} />
+          <div className="text-left">
+            <p className={`font-medium ${activeTab === 'database' ? 'text-indigo-500' : 'text-gray-700'}`}>Database</p>
+            <p className="text-xs text-gray-500">SQL, NoSQL</p>
+          </div>
+        </button>
+      </div>
+    );
+  };
+
+  const renderFileUpload = () => {
+    if (files.length > 0 && uploadStatus) {
+      return renderFileProcessing();
+    }
+    
+    return (
+      <div 
+        className={`border-2 border-dashed rounded-lg p-8 text-center ${dragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          multiple={false}
+          onChange={handleChange}
+          accept=".csv,.xlsx,.json"
+        />
+        
+        <div className="mb-4 flex justify-center">
+          <Upload size={48} className={`${dragActive ? 'text-indigo-500' : 'text-gray-400'}`} />
+        </div>
+        
+        <h3 className="text-lg font-semibold mb-2">
+          {dragActive ? 'Drop your file here' : 'Drag & drop your file here'}
+        </h3>
+        
+        <p className="text-gray-500 mb-4">
+          Support for CSV, Excel, and JSON formats
+        </p>
+        
+        <button
+          onClick={onButtonClick}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg"
+        >
+          Browse Files
+        </button>
+        
+        <p className="text-xs text-gray-500 mt-4">
+          Maximum file size: 50MB
+        </p>
+      </div>
+    );
+  };
+
+  const renderFileProcessing = () => {
+    return (
+      <div className="border rounded-lg p-6">
+        <div className="flex items-start mb-4">
+          <div>
+            <h3 className="font-semibold text-lg">{files[0].name}</h3>
+            <p className="text-sm text-gray-500">{Math.round(files[0].size / 1024)} KB • {files[0].type || 'Unknown type'}</p>
+          </div>
+          <button className="ml-auto text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
+        
+        {uploadStatus === 'validating' && (
+          <div className="flex items-center text-indigo-600 mb-4">
+            <div className="animate-spin mr-2">
+              <Upload size={20} />
+            </div>
+            <span>Validating file...</span>
+          </div>
+        )}
+        
+        {uploadStatus === 'processing' && (
+          <>
+            <div className="mb-2 flex justify-between text-sm">
+              <span>Processing</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+            </div>
+          </>
+        )}
+        
+        {uploadStatus === 'complete' && (
+          <div className="flex items-center text-green-600 mb-4">
+            <Check size={20} className="mr-2" />
+            <span>Processing complete</span>
+          </div>
+        )}
+        
+        {/* Validation Results */}
+        {validationResults.length > 0 && (
+          <div className="mb-4">
+            <h4 className="font-medium mb-2">Validation Results:</h4>
+            <div className="space-y-2">
+              {validationResults.map((result, index) => (
+                <div key={index} className="flex items-start">
+                  {result.type === 'success' && <Check size={16} className="text-green-500 mr-2 mt-1" />}
+                  {result.type === 'warning' && <AlertCircle size={16} className="text-yellow-500 mr-2 mt-1" />}
+                  {result.type === 'info' && <HelpCircle size={16} className="text-blue-500 mr-2 mt-1" />}
+                  <span className={`text-sm ${
+                    result.type === 'success' ? 'text-green-700' : 
+                    result.type === 'warning' ? 'text-yellow-700' : 'text-blue-700'
+                  }`}>{result.message}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {Object.keys(mappedFields).length > 0 && (
+          <div className="mb-4">
+            <h4 className="font-medium mb-2">Detected Field Mapping:</h4>
+            <div className="border rounded overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-2 px-4 text-left">System Field</th>
+                    <th className="py-2 px-4 text-left">Source Field</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(mappedFields).map(([key, value], index) => (
+                    <tr key={index} className="border-t">
+                      <td className="py-2 px-4 font-medium">{key}</td>
+                      <td className="py-2 px-4">{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        
+        {uploadStatus === 'complete' && (
+          <div className="flex justify-end space-x-3">
+            <button className="border border-indigo-500 text-indigo-500 px-4 py-2 rounded hover:bg-indigo-50">
+              Edit Mapping
+            </button>
+            <button 
+              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+              onClick={() => setActiveStep(3)}
+            >
+              Validate Data
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderApiConnection = () => {
+    return (
+      <div className="border rounded-lg p-6">
+        <h3 className="font-semibold text-lg mb-4">API Connection</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">API Endpoint URL</label>
+            <input 
+              type="text" 
+              className="w-full border rounded px-3 py-2"
+              placeholder="https://api.example.com/data"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Authentication Method</label>
+            <select className="w-full border rounded px-3 py-2">
+              <option>API Key</option>
+              <option>OAuth 2.0</option>
+              <option>Basic Auth</option>
+              <option>No Authentication</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+            <input 
+              type="password" 
+              className="w-full border rounded px-3 py-2"
+              placeholder="Enter your API key"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Request Method</label>
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input type="radio" name="method" className="mr-2" defaultChecked />
+                <span>GET</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" name="method" className="mr-2" />
+                <span>POST</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" name="method" className="mr-2" />
+                <span>PUT</span>
+              </label>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <button className="border border-indigo-500 text-indigo-500 px-4 py-2 rounded hover:bg-indigo-50">
+              Test Connection
+            </button>
+            <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDatabaseConnection = () => {
+    return (
+      <div className="border rounded-lg p-6">
+        <h3 className="font-semibold text-lg mb-4">Database Connection</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Database Type</label>
+            <select className="w-full border rounded px-3 py-2">
+              <option>MySQL</option>
+              <option>PostgreSQL</option>
+              <option>MongoDB</option>
+              <option>Oracle</option>
+              <option>SQL Server</option>
+            </select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Host</label>
+              <input 
+                type="text" 
+                className="w-full border rounded px-3 py-2"
+                placeholder="localhost"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Port</label>
+              <input 
+                type="text" 
+                className="w-full border rounded px-3 py-2"
+                placeholder="3306"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Database Name</label>
+            <input 
+              type="text" 
+              className="w-full border rounded px-3 py-2"
+              placeholder="my_database"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input 
+                type="text" 
+                className="w-full border rounded px-3 py-2"
+                placeholder="username"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input 
+                type="password" 
+                className="w-full border rounded px-3 py-2"
+                placeholder="Enter password"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">SQL Query</label>
+            <textarea 
+              className="w-full border rounded px-3 py-2 font-mono"
+              rows="3"
+              placeholder="SELECT * FROM customers WHERE signup_date > '2023-01-01'"
+            ></textarea>
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <button className="border border-indigo-500 text-indigo-500 px-4 py-2 rounded hover:bg-indigo-50">
+              Test Connection
+            </button>
+            <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDataValidation = () => {
+    return (
+      <div className="border rounded-lg p-6">
+        <h3 className="font-semibold text-lg mb-4">Data Validation</h3>
+        
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="font-medium">Data Summary</h4>
+            <span className="text-sm text-gray-500">customer_data.csv</span>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="border rounded p-4 bg-gray-50">
+              <div className="text-sm text-gray-500 mb-1">Total Records</div>
+              <div className="text-xl font-semibold">15,842</div>
+            </div>
+            <div className="border rounded p-4 bg-gray-50">
+              <div className="text-sm text-gray-500 mb-1">Valid Records</div>
+              <div className="text-xl font-semibold text-green-600">14,962</div>
+            </div>
+            <div className="border rounded p-4 bg-gray-50">
+              <div className="text-sm text-gray-500 mb-1">Records with Issues</div>
+              <div className="text-xl font-semibold text-yellow-600">880</div>
+            </div>
+            <div className="border rounded p-4 bg-gray-50">
+              <div className="text-sm text-gray-500 mb-1">Fields Mapped</div>
+              <div className="text-xl font-semibold text-indigo-600">14/14</div>
+            </div>
+          </div>
+          
+          <h4 className="font-medium mb-2">Data Quality Issues</h4>
+          <div className="border rounded overflow-hidden mb-4">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="py-2 px-4 text-left">Issue Type</th>
+                  <th className="py-2 px-4 text-left">Field</th>
+                  <th className="py-2 px-4 text-left">Records Affected</th>
+                  <th className="py-2 px-4 text-left">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t">
+                  <td className="py-2 px-4">Missing Values</td>
+                  <td className="py-2 px-4">email</td>
+                  <td className="py-2 px-4">352 (2.2%)</td>
+                  <td className="py-2 px-4">
+                    <select className="border rounded px-2 py-1 text-xs">
+                      <option>Skip Records</option>
+                      <option>Replace with Default</option>
+                      <option>Generate from Other Fields</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr className="border-t">
+                  <td className="py-2 px-4">Invalid Format</td>
+                  <td className="py-2 px-4">purchase_date</td>
+                  <td className="py-2 px-4">245 (1.5%)</td>
+                  <td className="py-2 px-4">
+                    <select className="border rounded px-2 py-1 text-xs">
+                      <option>Auto-correct Format</option>
+                      <option>Skip Records</option>
+                      <option>Replace with Default</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr className="border-t">
+                  <td className="py-2 px-4">Duplicate Records</td>
+                  <td className="py-2 px-4">customer_id</td>
+                  <td className="py-2 px-4">283 (1.8%)</td>
+                  <td className="py-2 px-4">
+                    <select className="border rounded px-2 py-1 text-xs">
+                      <option>Keep First Record</option>
+                      <option>Keep Last Record</option>
+                      <option>Skip Records</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <h4 className="font-medium mb-2">Customer Segments Detected</h4>
+          <div className="border rounded-lg p-4 grid grid-cols-5 gap-4 bg-gray-50">
+            <div className="p-3 rounded bg-white border shadow-sm">
+              <div className="text-indigo-600 font-medium">High Value</div>
+              <div className="text-sm text-gray-500">3,218 customers</div>
+            </div>
+            <div className="p-3 rounded bg-white border shadow-sm">
+              <div className="text-indigo-600 font-medium">Frequent Buyers</div>
+              <div className="text-sm text-gray-500">4,572 customers</div>
+            </div>
+            <div className="p-3 rounded bg-white border shadow-sm">
+              <div className="text-indigo-600 font-medium">New Customers</div>
+              <div className="text-sm text-gray-500">2,105 customers</div>
+            </div>
+            <div className="p-3 rounded bg-white border shadow-sm">
+              <div className="text-indigo-600 font-medium">At Risk</div>
+              <div className="text-sm text-gray-500">1,893 customers</div>
+            </div>
+            <div className="p-3 rounded bg-white border shadow-sm">
+              <div className="text-indigo-600 font-medium">Occasional</div>
+              <div className="text-sm text-gray-500">4,054 customers</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-end space-x-3">
+          <button className="border border-indigo-500 text-indigo-500 px-4 py-2 rounded hover:bg-indigo-50">
+            Back to Configuration
+          </button>
+          <button 
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            onClick={proceedToAnalysis}
+          >
+            Proceed to Analysis
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white p-6">
+      <h2 className="text-2xl font-bold mb-2">Data Ingestion</h2>
+      <p className="text-gray-600 mb-6">Upload or connect to your data source to begin campaign analysis.</p>
+      
+      {renderSteps()}
+      
+      {activeStep === 1 && (
+        <>
+          {renderSourceSelection()}
+          {activeTab === 'file' && renderFileUpload()}
+          {activeTab === 'api' && renderApiConnection()}
+          {activeTab === 'database' && renderDatabaseConnection()}
+        </>
+      )}
+      
+      {activeStep === 2 && (
+        <>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Configuration</h3>
+            <p className="text-gray-600">Configure your data source settings and field mapping.</p>
+          </div>
+          {activeTab === 'file' && renderFileProcessing()}
+          {activeTab === 'api' && renderApiConnection()}
+          {activeTab === 'database' && renderDatabaseConnection()}
+        </>
+      )}
+      
+      {activeStep === 3 && (
+        <>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Data Validation</h3>
+            <p className="text-gray-600">Review and resolve data quality issues before proceeding.</p>
+          </div>
+          {renderDataValidation()}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default DataIngestionInterface;
