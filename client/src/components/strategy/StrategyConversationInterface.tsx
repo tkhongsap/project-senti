@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, ChevronRight, Upload, CheckCircle } from 'lucide-react';
+import { Send, ChevronRight, Upload, CheckCircle, Network, Database, FileText, AlertCircle, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,34 +7,44 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { uploadCSVData } from "@/lib/data-ingestion";
 
+type LifecycleStage = 'prospecting' | 'ownership' | 'inlife' | 'risky' | 'churn';
+type Message = {
+  sender: 'user' | 'agent' | 'ingestion';
+  content: string;
+  timestamp: Date;
+};
+
 export function StrategyConversationInterface() {
-  const [activeStep, setActiveStep] = useState('strategy'); // 'strategy', 'ingestion'
-  const [messages, setMessages] = useState([
-    {
-      sender: 'agent',
-      content: "Hi there! I'm your Strategy Agent. Let's start by defining your campaign objectives across the customer lifecycle. What are your main goals for each stage?",
-      timestamp: new Date()
-    }
-  ]);
+  const [activeStep, setActiveStep] = useState<'strategy' | 'ingestion'>('strategy');
+  const [messages, setMessages] = useState<Message[]>([{
+    sender: 'agent',
+    content: "Hi there! I'm your Strategy Agent. Let's start by defining your campaign objectives across the customer lifecycle. What are your main goals for each stage?",
+    timestamp: new Date()
+  }]);
   const [userInput, setUserInput] = useState('');
-  const [objectives, setObjectives] = useState({
+  const [objectives, setObjectives] = useState<Record<LifecycleStage, string>>({
     prospecting: '',
     ownership: '',
     inlife: '',
     risky: '',
     churn: ''
   });
-  const [currentLifecycleStage, setCurrentLifecycleStage] = useState('prospecting');
+  const [currentLifecycleStage, setCurrentLifecycleStage] = useState<LifecycleStage>('prospecting');
   const [allObjectivesDefined, setAllObjectivesDefined] = useState(false);
-  const [showIngestion, setShowIngestion] = useState(false);
+
+  // Data ingestion state
+  const [activeTab, setActiveTab] = useState<'file' | 'api' | 'database'>('file');
+  const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [processingStatus, setProcessingStatus] = useState<'processing' | 'complete' | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'validating' | 'processing' | 'complete' | 'error' | null>(null);
+  const [validationResults, setValidationResults] = useState<Array<{type: 'success' | 'warning' | 'info', message: string}>>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Fix the lifecycle stages definition
-  const lifecycleStages = {
+  const lifecycleStages: Record<LifecycleStage, string> = {
     prospecting: `Attracting and engaging potential customers who aren't yet customers`,
     ownership: `Initial customer onboarding and early relationship building`,
     inlife: `Deepening relationships with active and satisfied customers`,
@@ -42,21 +52,17 @@ export function StrategyConversationInterface() {
     churn: `Re-engaging customers who have left or are about to leave`
   };
 
-  // Automatic scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Check if all objectives have been defined
   useEffect(() => {
     const allDefined = Object.values(objectives).every(value => value !== '');
     setAllObjectivesDefined(allDefined);
   }, [objectives]);
 
-  // Process strategy agent responses
   useEffect(() => {
     if (messages.length > 0 && messages[messages.length - 1].sender === 'user') {
-      // Simulate agent thinking
       setTimeout(() => {
         if (!allObjectivesDefined) {
           handleStrategyAgentResponse();
@@ -67,32 +73,57 @@ export function StrategyConversationInterface() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (uploadedFiles.length > 0 && uploadStatus === 'validating') {
+      const timer = setTimeout(() => {
+        setUploadStatus('processing');
+        setValidationResults([
+          { type: 'success', message: 'File format is valid' },
+          { type: 'success', message: 'All required columns present' },
+          { type: 'warning', message: '15% of records have missing values' },
+          { type: 'info', message: 'Processing campaign data' }
+        ]);
+
+        let progress = 0;
+        const progressTimer = setInterval(() => {
+          progress += 5;
+          setUploadProgress(progress);
+
+          if (progress >= 100) {
+            clearInterval(progressTimer);
+            setUploadStatus('complete');
+          }
+        }, 300);
+
+        return () => {
+          clearInterval(progressTimer);
+          clearTimeout(timer);
+        };
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadedFiles, uploadStatus]);
+
   const handleStrategyAgentResponse = () => {
-    // Update the current objective based on user input
     const userResponse = messages[messages.length - 1].content;
     const updatedObjectives = { ...objectives };
     updatedObjectives[currentLifecycleStage] = userResponse;
     setObjectives(updatedObjectives);
 
-    // Determine next lifecycle stage to ask about
-    const stages = Object.keys(lifecycleStages);
+    const stages = Object.keys(lifecycleStages) as LifecycleStage[];
     const currentIndex = stages.indexOf(currentLifecycleStage);
-    
+
     if (currentIndex < stages.length - 1) {
-      // Move to next stage
       const nextStage = stages[currentIndex + 1];
       setCurrentLifecycleStage(nextStage);
-      
-      setMessages(prevMessages => [
-        ...prevMessages,
-        {
-          sender: 'agent',
-          content: `Thanks! Now let's talk about the ${nextStage} stage: ${lifecycleStages[nextStage]}. What are your objectives for this stage?`,
-          timestamp: new Date()
-        }
-      ]);
+
+      setMessages(prevMessages => [...prevMessages, {
+        sender: 'agent',
+        content: `Thanks! Now let's talk about the ${nextStage} stage: ${lifecycleStages[nextStage]}. What are your objectives for this stage?`,
+        timestamp: new Date()
+      }]);
     } else {
-      // All stages completed
       setMessages(prevMessages => [
         ...prevMessages,
         {
@@ -123,24 +154,22 @@ export function StrategyConversationInterface() {
         timestamp: new Date()
       },
       {
-        sender: 'agent',
+        sender: 'ingestion',
         content: "Hello, I'm your Ingestion Agent! Based on your campaign objectives, we'll need customer data across various lifecycle stages. Please upload your customer data files (CSV, Excel, or JSON).",
-        timestamp: new Date(),
-        sender: 'ingestion'
+        timestamp: new Date()
       }
     ]);
     setActiveStep('ingestion');
-    setShowIngestion(true);
   };
 
-  const summarizeObjectives = (objectives: Record<string, string>) => {
+  const summarizeObjectives = (objectives: Record<LifecycleStage, string>) => {
     let summary = "**Campaign Objectives Summary:**\n\n";
-    
+
     Object.entries(objectives).forEach(([stage, objective]) => {
       const formattedStage = stage.charAt(0).toUpperCase() + stage.slice(1);
       summary += `**${formattedStage} Stage:** ${objective}\n\n`;
     });
-    
+
     return summary;
   };
 
@@ -156,47 +185,193 @@ export function StrategyConversationInterface() {
         timestamp: new Date()
       }
     ]);
-    
+
     setUserInput('');
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setUploadedFiles([file]);
-      setProcessingStatus('processing');
-
-      try {
-        await uploadCSVData(file);
-        queryClient.invalidateQueries({ queryKey: ["/api/data-points"] });
-        
-        setProcessingStatus('complete');
-        setMessages(prevMessages => [
-          ...prevMessages,
-          {
-            sender: 'user',
-            content: `Uploaded file: ${file.name}`,
-            timestamp: new Date()
-          },
-          {
-            sender: 'ingestion',
-            content: `I've successfully processed your data file. Based on your objectives, I've mapped the data to your campaign stages and prepared it for analysis.`,
-            timestamp: new Date()
-          }
-        ]);
-
-        toast({
-          title: "Upload Successful",
-          description: "Your campaign data has been processed successfully.",
-        });
-      } catch (error) {
-        toast({
-          title: "Upload Failed",
-          description: error instanceof Error ? error.message : "An error occurred during upload",
-          variant: "destructive",
-        });
-      }
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
     }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      await handleFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleFiles = async (files: File[]) => {
+    setUploadedFiles(files);
+    setUploadStatus('validating');
+    setUploadProgress(0);
+
+    try {
+      await uploadCSVData(files[0]);
+      queryClient.invalidateQueries({ queryKey: ["/api/data-points"] });
+
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          sender: 'user',
+          content: `Uploaded file: ${files[0].name}`,
+          timestamp: new Date()
+        },
+        {
+          sender: 'ingestion',
+          content: `I've successfully processed your data file. Based on your objectives, I've mapped the data to your campaign stages and prepared it for analysis.`,
+          timestamp: new Date()
+        }
+      ]);
+
+      toast({
+        title: "Upload Successful",
+        description: "Your campaign data has been processed successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "An error occurred during upload",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderSourceTabs = () => (
+    <div className="flex space-x-4 mb-6">
+      <button 
+        className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'file' ? 'border-primary bg-primary/10' : 'border-border'}`}
+        onClick={() => setActiveTab('file')}
+      >
+        <FileText className={activeTab === 'file' ? 'text-primary' : 'text-muted-foreground'} />
+        <div className="text-left">
+          <p className={`font-medium ${activeTab === 'file' ? 'text-primary' : 'text-foreground'}`}>File Upload</p>
+          <p className="text-xs text-muted-foreground">CSV, Excel, JSON</p>
+        </div>
+      </button>
+
+      <button 
+        className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'api' ? 'border-primary bg-primary/10' : 'border-border'}`}
+        onClick={() => setActiveTab('api')}
+      >
+        <Network className={activeTab === 'api' ? 'text-primary' : 'text-muted-foreground'} />
+        <div className="text-left">
+          <p className={`font-medium ${activeTab === 'api' ? 'text-primary' : 'text-foreground'}`}>API Connection</p>
+          <p className="text-xs text-muted-foreground">REST, GraphQL</p>
+        </div>
+      </button>
+
+      <button 
+        className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'database' ? 'border-primary bg-primary/10' : 'border-border'}`}
+        onClick={() => setActiveTab('database')}
+      >
+        <Database className={activeTab === 'database' ? 'text-primary' : 'text-muted-foreground'} />
+        <div className="text-left">
+          <p className={`font-medium ${activeTab === 'database' ? 'text-primary' : 'text-foreground'}`}>Database</p>
+          <p className="text-xs text-muted-foreground">SQL, NoSQL</p>
+        </div>
+      </button>
+    </div>
+  );
+
+  const renderFileUpload = () => {
+    if (uploadedFiles.length > 0 && uploadStatus) {
+      return (
+        <div className="p-4 bg-muted rounded-lg">
+          {uploadedFiles.map((file, index) => (
+            <div key={index} className="flex items-center justify-between mb-4">
+              <div>
+                <p className="font-medium">{file.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(file.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
+              {uploadStatus === 'processing' ? (
+                <div className="animate-spin">
+                  <Upload className="h-4 w-4" />
+                </div>
+              ) : uploadStatus === 'complete' ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : null}
+            </div>
+          ))}
+
+          {uploadStatus === 'processing' && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Processing</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {validationResults.map((result, index) => (
+            <div key={index} className="flex items-center mt-2">
+              {result.type === 'success' && <CheckCircle className="h-4 w-4 text-green-500 mr-2" />}
+              {result.type === 'warning' && <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />}
+              {result.type === 'info' && <AlertCircle className="h-4 w-4 text-blue-500 mr-2" />}
+              <span className="text-sm">{result.message}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className={`border-2 border-dashed rounded-lg p-8 text-center ${dragActive ? 'border-primary bg-primary/10' : 'border-border'}`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleFileSelect}
+          accept=".csv,.xlsx,.json"
+          className="hidden"
+        />
+
+        <Upload className={`h-12 w-12 mx-auto mb-4 ${dragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+
+        <h3 className="text-lg font-semibold mb-2">
+          {dragActive ? 'Drop your file here' : 'Drag & drop your file here'}
+        </h3>
+
+        <p className="text-muted-foreground mb-4">
+          Support for CSV, Excel, and JSON formats
+        </p>
+
+        <Button onClick={() => fileInputRef.current?.click()}>
+          Browse Files
+        </Button>
+
+        <p className="text-xs text-muted-foreground mt-4">
+          Maximum file size: 50MB
+        </p>
+      </div>
+    );
   };
 
   return (
@@ -204,18 +379,18 @@ export function StrategyConversationInterface() {
       <CardHeader>
         <CardTitle>Campaign Strategy Development</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
+      <CardContent className="flex-1 flex flex-col overflow-hidden">
         {/* Progress Steps */}
-        <div className="flex items-center mb-6 px-4">
+        <div className="flex items-center mb-6">
           <div className={`flex items-center ${activeStep === 'strategy' ? 'text-primary' : 'text-muted-foreground'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'strategy' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
               <span className="font-semibold">1</span>
             </div>
             <span className="ml-2 font-medium">Strategy</span>
           </div>
-          
+
           <ChevronRight className="mx-4 text-muted-foreground" />
-          
+
           <div className={`flex items-center ${activeStep === 'ingestion' ? 'text-primary' : 'text-muted-foreground'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'ingestion' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
               <span className="font-semibold">2</span>
@@ -224,10 +399,10 @@ export function StrategyConversationInterface() {
           </div>
         </div>
 
-        {/* Left Panel - Lifecycle Stages */}
-        <div className="flex gap-4 h-full">
-          <div className="w-64 space-y-2">
-            {Object.entries(lifecycleStages).map(([stage, description]) => (
+        <div className="flex gap-4 flex-1 overflow-hidden">
+          {/* Left Panel - Lifecycle Stages */}
+          <div className="w-64 space-y-2 overflow-y-auto">
+            {(Object.keys(lifecycleStages) as LifecycleStage[]).map((stage) => (
               <div
                 key={stage}
                 className={`p-3 rounded-lg border ${
@@ -244,7 +419,7 @@ export function StrategyConversationInterface() {
                   )}
                   <div>
                     <h3 className="font-medium capitalize">{stage}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{lifecycleStages[stage]}</p>
                     {objectives[stage] && (
                       <p className="text-xs text-primary mt-1 italic">
                         "{objectives[stage].substring(0, 60)}..."
@@ -256,8 +431,8 @@ export function StrategyConversationInterface() {
             ))}
           </div>
 
-          {/* Right Panel - Chat Interface */}
-          <div className="flex-1 flex flex-col">
+          {/* Right Panel - Chat Interface & Data Ingestion */}
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto space-y-4 mb-4">
               {messages.map((message, index) => (
                 <div
@@ -285,48 +460,13 @@ export function StrategyConversationInterface() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* File Upload Area */}
-            {showIngestion && (
+            {activeStep === 'ingestion' && (
               <div className="mb-4">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileUpload}
-                  accept=".csv,.xlsx,.json"
-                  className="hidden"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Data File
-                </Button>
-
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="mt-2 p-2 bg-muted rounded-lg flex items-center">
-                    <div className="flex-1">
-                      <p className="font-medium">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
-                    {processingStatus === 'processing' ? (
-                      <div className="animate-spin">
-                        <Upload className="h-4 w-4" />
-                      </div>
-                    ) : (
-                      processingStatus === 'complete' && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      )
-                    )}
-                  </div>
-                ))}
+                {renderSourceTabs()}
+                {activeTab === 'file' && renderFileUpload()}
               </div>
             )}
 
-            {/* Input Area */}
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <Input
                 value={userInput}
