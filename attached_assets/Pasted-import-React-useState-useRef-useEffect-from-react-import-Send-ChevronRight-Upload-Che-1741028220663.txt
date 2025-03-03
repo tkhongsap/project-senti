@@ -1,0 +1,470 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, ChevronRight, Upload, CheckCircle } from 'lucide-react';
+
+const StrategyConversationInterface = () => {
+  const [activeStep, setActiveStep] = useState('strategy'); // 'strategy', 'ingestion'
+  const [messages, setMessages] = useState([
+    {
+      sender: 'agent',
+      content: "Hi there! I'm your Strategy Agent. Let's start by defining your campaign objectives across the customer lifecycle. What are your main goals for each stage?",
+      timestamp: new Date()
+    }
+  ]);
+  const [userInput, setUserInput] = useState('');
+  const [objectives, setObjectives] = useState({
+    prospecting: '',
+    ownership: '',
+    inlife: '',
+    risky: '',
+    churn: ''
+  });
+  const [currentLifecycleStage, setCurrentLifecycleStage] = useState('prospecting');
+  const [allObjectivesDefined, setAllObjectivesDefined] = useState(false);
+  const [showIngestion, setShowIngestion] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [processingStatus, setProcessingStatus] = useState(null); // null, 'processing', 'complete'
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Lifecycle stages with descriptions
+  const lifecycleStages = {
+    prospecting: 'Attracting and engaging potential customers who aren't yet customers',
+    ownership: 'Initial customer onboarding and early relationship building',
+    inlife: 'Deepening relationships with active and satisfied customers',
+    risky: 'Addressing customers showing signs of dissatisfaction or decreased engagement',
+    churn: 'Re-engaging customers who have left or are about to leave'
+  };
+
+  // Automatic scroll to bottom of messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Check if all objectives have been defined
+  useEffect(() => {
+    const allDefined = Object.values(objectives).every(value => value !== '');
+    setAllObjectivesDefined(allDefined);
+  }, [objectives]);
+
+  // Process strategy agent responses
+  useEffect(() => {
+    if (messages.length > 0 && messages[messages.length - 1].sender === 'user') {
+      // Simulate agent thinking
+      setTimeout(() => {
+        if (!allObjectivesDefined) {
+          handleStrategyAgentResponse();
+        } else if (activeStep === 'strategy' && messages[messages.length - 1].content.toLowerCase().includes('yes')) {
+          handleStrategyComplete();
+        }
+      }, 1000);
+    }
+  }, [messages]);
+
+  const handleStrategyAgentResponse = () => {
+    // Update the current objective based on user input
+    const userResponse = messages[messages.length - 1].content;
+    const updatedObjectives = { ...objectives };
+    updatedObjectives[currentLifecycleStage] = userResponse;
+    setObjectives(updatedObjectives);
+
+    // Determine next lifecycle stage to ask about
+    const stages = Object.keys(lifecycleStages);
+    const currentIndex = stages.indexOf(currentLifecycleStage);
+    
+    if (currentIndex < stages.length - 1) {
+      // Move to next stage
+      const nextStage = stages[currentIndex + 1];
+      setCurrentLifecycleStage(nextStage);
+      
+      // Add agent message asking about next stage
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          sender: 'agent',
+          content: `Thanks! Now let's talk about the ${nextStage} stage: ${lifecycleStages[nextStage]}. What are your objectives for this stage?`,
+          timestamp: new Date()
+        }
+      ]);
+    } else {
+      // All stages completed
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          sender: 'agent',
+          content: "Great! I've collected objectives for all customer lifecycle stages. Let me summarize what we've discussed:",
+          timestamp: new Date()
+        },
+        {
+          sender: 'agent',
+          content: summarizeObjectives(updatedObjectives),
+          timestamp: new Date()
+        },
+        {
+          sender: 'agent',
+          content: "Does this accurately capture your campaign objectives across the customer lifecycle? Type 'yes' to proceed to data ingestion, or clarify if you'd like to make any changes.",
+          timestamp: new Date()
+        }
+      ]);
+    }
+  };
+
+  const handleStrategyComplete = () => {
+    setMessages(prevMessages => [
+      ...prevMessages,
+      {
+        sender: 'agent',
+        content: "Perfect! I'm now handing you over to the Ingestion Agent who will help you upload the data needed to meet these objectives.",
+        timestamp: new Date()
+      },
+      {
+        sender: 'agent',
+        content: "Hello, I'm your Ingestion Agent! Based on your campaign objectives, we'll need customer data across various lifecycle stages. Please upload your customer data files (CSV, Excel, or JSON).",
+        timestamp: new Date(),
+        sender: 'ingestion'
+      }
+    ]);
+    setActiveStep('ingestion');
+    setShowIngestion(true);
+  };
+
+  const summarizeObjectives = (objectives) => {
+    let summary = "**Campaign Objectives Summary:**\n\n";
+    
+    Object.entries(objectives).forEach(([stage, objective]) => {
+      const formattedStage = stage.charAt(0).toUpperCase() + stage.slice(1);
+      summary += `**${formattedStage} Stage:** ${objective}\n\n`;
+    });
+    
+    return summary;
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (userInput.trim() === '') return;
+
+    // Add user message
+    setMessages(prevMessages => [
+      ...prevMessages,
+      {
+        sender: 'user',
+        content: userInput,
+        timestamp: new Date()
+      }
+    ]);
+    
+    setUserInput('');
+  };
+
+  const handleFileUpload = (e) => {
+    if (e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files).map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadTime: new Date()
+      }));
+      
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      // Add message about the upload
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          sender: 'user',
+          content: `Uploaded ${newFiles.length} file(s): ${newFiles.map(f => f.name).join(', ')}`,
+          timestamp: new Date()
+        }
+      ]);
+
+      // Simulate file processing
+      setProcessingStatus('processing');
+      setTimeout(() => {
+        setProcessingStatus('complete');
+        
+        // Agent response after processing
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            sender: 'ingestion',
+            content: `I've successfully processed your data files. Based on your objectives, here's what I found:`,
+            timestamp: new Date()
+          },
+          {
+            sender: 'ingestion',
+            content: generateDataSummary(objectives),
+            timestamp: new Date()
+          },
+          {
+            sender: 'ingestion',
+            content: `Would you like to proceed to the analysis stage with this data?`,
+            timestamp: new Date()
+          }
+        ]);
+      }, 3000);
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current.click();
+  };
+
+  const generateDataSummary = (objectives) => {
+    // This would be generated based on the actual data in a real application
+    return `**Data Summary**:
+    
+- **Total Records**: 15,842
+- **Customer Segments**:
+  - High-Value Customers: 3,218
+  - New Customers: 2,105
+  - At-Risk Customers: 1,893
+  - Churned Customers: 748
+  - Regular Customers: 7,878
+
+**Relevant Data for Your Objectives**:
+
+- For Prospecting: 1,450 potential leads identified
+- For Ownership Experience: 2,105 customers in onboarding stage
+- For Inlife Customers: 7,878 active regular customers
+- For Risky Customers: 1,893 customers showing declining engagement
+- For Churn: 748 recently churned customers + 2,768 historical churn cases
+
+**Data Quality**:
+- 96% of records have complete information
+- Customer engagement data is available for 92% of customers
+- Purchase history available for last 18 months`;
+  };
+
+  const formatMessage = (content) => {
+    // Simple markdown-like formatter
+    return content.split('\n').map((line, i) => {
+      // Bold text
+      line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // Handle lists
+      if (line.match(/^- /)) {
+        return <li key={i}>{line.replace(/^- /, '')}</li>;
+      }
+      
+      return <p key={i}>{line}</p>;
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-indigo-700 text-white p-4 shadow">
+        <div className="container mx-auto">
+          <h1 className="text-xl font-semibold">Campaign Management System</h1>
+          <div className="flex mt-2">
+            <div className={`flex items-center ${activeStep === 'strategy' ? 'text-white' : 'text-indigo-200'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'strategy' ? 'bg-indigo-500' : 'bg-indigo-600'}`}>
+                <span className="font-semibold">1</span>
+              </div>
+              <span className="ml-2 font-medium">Strategy Definition</span>
+            </div>
+            
+            <div className="mx-4 flex items-center text-indigo-300">
+              <ChevronRight size={20} />
+            </div>
+            
+            <div className={`flex items-center ${activeStep === 'ingestion' ? 'text-white' : 'text-indigo-200'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'ingestion' ? 'bg-indigo-500' : 'bg-indigo-600'}`}>
+                <span className="font-semibold">2</span>
+              </div>
+              <span className="ml-2 font-medium">Data Ingestion</span>
+            </div>
+            
+            <div className="mx-4 flex items-center text-indigo-300">
+              <ChevronRight size={20} />
+            </div>
+            
+            <div className="flex items-center text-indigo-200">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-600">
+                <span className="font-semibold">3</span>
+              </div>
+              <span className="ml-2 font-medium">Analysis</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left panel (lifecycle stages) */}
+        <div className="w-64 bg-white shadow-md p-4 border-r flex flex-col">
+          <h2 className="font-semibold text-gray-800 mb-4">Customer Lifecycle</h2>
+          
+          {Object.entries(lifecycleStages).map(([stage, description]) => (
+            <div 
+              key={stage}
+              className={`p-3 mb-2 rounded-md ${
+                stage === currentLifecycleStage 
+                  ? 'bg-indigo-100 border border-indigo-300' 
+                  : objectives[stage] 
+                    ? 'bg-green-50 border border-green-200' 
+                    : 'bg-gray-50 border border-gray-200'
+              }`}
+            >
+              <div className="flex items-start">
+                {objectives[stage] && (
+                  <CheckCircle size={16} className="text-green-500 mr-2 mt-1 flex-shrink-0" />
+                )}
+                <div>
+                  <h3 className="font-medium text-gray-800 capitalize">{stage}</h3>
+                  <p className="text-xs text-gray-500 mt-1">{description}</p>
+                  {objectives[stage] && (
+                    <p className="text-xs text-indigo-600 mt-1 italic">"{objectives[stage].substring(0, 60)}..."</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {allObjectivesDefined && (
+            <div className="mt-auto bg-green-100 p-3 rounded-md border border-green-300">
+              <p className="text-sm text-green-800">
+                <CheckCircle size={16} className="inline-block mr-1" />
+                All objectives defined!
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Right panel (conversation) */}
+        <div className="flex-1 flex flex-col bg-gray-50">
+          {/* Conversation area */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="max-w-3xl mx-auto">
+              {messages.map((message, index) => (
+                <div 
+                  key={index} 
+                  className={`mb-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div 
+                    className={`max-w-md rounded-lg px-4 py-2 ${
+                      message.sender === 'user' 
+                        ? 'bg-indigo-600 text-white'
+                        : message.sender === 'ingestion'
+                          ? 'bg-emerald-100 border border-emerald-200 text-gray-800'
+                          : 'bg-white border border-gray-200 text-gray-800'
+                    }`}
+                  >
+                    {message.sender !== 'user' && (
+                      <div className="text-xs text-gray-500 mb-1">
+                        {message.sender === 'ingestion' ? 'Ingestion Agent' : 'Strategy Agent'}
+                      </div>
+                    )}
+                    <div className="content">
+                      {typeof message.content === 'string' 
+                        ? <div dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
+                        : message.content
+                      }
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+          
+          {/* File upload area - only shown when in ingestion step */}
+          {showIngestion && (
+            <div className="bg-white p-4 border-t border-gray-200">
+              <div className="max-w-3xl mx-auto">
+                <div className="mb-4">
+                  <h3 className="font-medium text-gray-800 mb-2">Upload Data Files</h3>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={triggerFileUpload}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center"
+                  >
+                    <Upload size={16} className="mr-2" />
+                    Select Files
+                  </button>
+                </div>
+                
+                {uploadedFiles.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Uploaded Files</h4>
+                    <div className="space-y-2">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center p-2 bg-gray-50 rounded border">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">{file.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {(file.size / 1024).toFixed(1)} KB • Uploaded {file.uploadTime.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          <div className={`${
+                            processingStatus === 'complete' 
+                              ? 'text-green-500' 
+                              : processingStatus === 'processing' 
+                                ? 'text-amber-500' 
+                                : 'text-gray-400'
+                          }`}>
+                            {processingStatus === 'complete' ? (
+                              <CheckCircle size={20} />
+                            ) : processingStatus === 'processing' ? (
+                              <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+                            ) : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {processingStatus === 'processing' && (
+                      <div className="mt-2 text-sm text-amber-600">
+                        Processing files...
+                      </div>
+                    )}
+                    
+                    {processingStatus === 'complete' && (
+                      <div className="mt-2 text-sm text-green-600">
+                        All files processed successfully!
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Input area */}
+          <div className="bg-white p-4 border-t border-gray-200">
+            <div className="max-w-3xl mx-auto">
+              <form onSubmit={handleSendMessage} className="flex items-center">
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder={
+                    activeStep === 'strategy' 
+                      ? allObjectivesDefined 
+                        ? "Type 'yes' to proceed or clarify any objectives..."
+                        : `Enter your objectives for the ${currentLifecycleStage} stage...`
+                      : "Respond to the ingestion agent..."
+                  }
+                  className="flex-1 border border-gray-300 rounded-l-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-r-md"
+                >
+                  <Send size={20} />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StrategyConversationInterface;
