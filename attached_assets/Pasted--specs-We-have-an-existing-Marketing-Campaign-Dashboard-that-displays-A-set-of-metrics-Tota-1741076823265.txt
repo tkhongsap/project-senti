@@ -1,0 +1,54 @@
+<specs>
+We have an existing Marketing Campaign Dashboard that displays:
+
+- A set of metrics: Total Value, Average Value, Current Trend, and Data Points.
+- A chart showing campaign performance over time.
+- A table or section showing recent data points.
+- Navigation tabs for Dashboard, Strategy, and Analysis.
+
+We want to:
+1. Introduce realistic, mock data so the dashboard feels more "alive" and clear to users. 
+2. Improve the overall design so that it's more visually appealing, user-friendly, and organized.
+3. Ensure the layout is fully responsive, adapting to mobile, tablet, and desktop screens without unnecessary scrolling or cramped layouts.
+4. Retain all existing functionality and structure (i.e., the dashboard remains the primary overview page).
+
+</specs>
+
+<your_task>
+1. **Incorporate Mock Data**:
+   - For each key metric (e.g., Total Trend, Average Value, Current Trend, Data Points), replace placeholder text (like "NaN") with realistic values, such as:
+     - Total Trend: 12.5% (vs. previous period)
+     - Average Value: $1.25 (cost per click or similar)
+     - Current Trend: “Rising” or “Stable”
+     - Data Points: 1,250 total records
+   - Provide at least a few example entries for "Recent Data Points" with categories, values, and timestamps.
+
+2. **Redesign the Dashboard Layout**:
+   - Make the dashboard more visually appealing (improved spacing, typography, and color usage).
+   - Keep the top metrics in a concise, easy-to-scan grid or row.
+   - Use a responsive grid system (e.g., CSS grid or flexbox) so the dashboard adapts to different screen sizes.
+   - Ensure charts and tables resize gracefully on mobile screens.
+
+3. **Improve Visual Hierarchy**:
+   - Use clear headings for each section (e.g., “Key Metrics,” “Campaign Performance Over Time,” “Recent Data Points”).
+   - Adjust font sizes, weights, and spacing to differentiate between primary and secondary information.
+
+4. **Maintain Existing Functionality**:
+   - Keep the current navigation tabs (Dashboard, Strategy, Analysis) in place.
+   - Preserve the existing chart logic and data-fetching methods, only change the styling and layout.
+   - Keep the code in React with TypeScript (and Radix UI if applicable).
+
+5. **Focus on Responsiveness**:
+   - Implement a mobile-first design approach.
+   - On smaller screens, ensure metrics stack vertically or collapse into cards.
+   - The chart(s) should either become scrollable or resize appropriately on mobile.
+
+</your_task>
+
+<rules>
+- Use React (and TypeScript, if the project already does).
+- Use Radix UI components if they’re already part of the stack.
+- Do not remove any existing functionality—only enhance layout, styling, and mock data.
+- Ensure the final design fits within standard screen sizes without excessive scrolling.
+- Follow best practices for accessibility (ARIA attributes, semantic HTML) where possible.
+</rules>

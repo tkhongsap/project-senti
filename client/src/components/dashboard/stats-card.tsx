@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
@@ -17,8 +18,20 @@ export function StatsCard({
   trend, 
   trendValue 
 }: StatsCardProps) {
+  const getTrendColor = () => {
+    if (trend === "up") return "text-emerald-500 bg-emerald-50";
+    if (trend === "down") return "text-rose-500 bg-rose-50";
+    return "text-amber-500 bg-amber-50";
+  };
+
+  const getTrendIcon = () => {
+    if (trend === "up") return <ArrowUp className="h-3 w-3" />;
+    if (trend === "down") return <ArrowDown className="h-3 w-3" />;
+    return <ArrowRight className="h-3 w-3" />;
+  };
+
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md">
+    <Card className="overflow-hidden transition-all hover:shadow-md border-border/60">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
@@ -30,22 +43,17 @@ export function StatsCard({
         )}
       </CardHeader>
       <CardContent className="p-4 pt-2">
-        <div className="flex items-baseline">
+        <div className="flex items-center">
           <div className="text-2xl font-bold truncate">{value}</div>
           {trend && trendValue && (
-            <span className={`ml-2 text-xs font-medium ${
-              trend === "up" 
-                ? "text-green-500" 
-                : trend === "down" 
-                  ? "text-red-500" 
-                  : "text-muted-foreground"
-            }`}>
-              {trend === "up" ? "↑" : trend === "down" ? "↓" : "→"} {trendValue}
-            </span>
+            <div className={`ml-2 text-xs font-medium flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${getTrendColor()}`}>
+              {getTrendIcon()}
+              <span>{trendValue}</span>
+            </div>
           )}
         </div>
         {description && (
-          <p className="text-xs text-muted-foreground mt-1 truncate">{description}</p>
+          <p className="text-xs text-muted-foreground mt-2 truncate">{description}</p>
         )}
       </CardContent>
     </Card>
