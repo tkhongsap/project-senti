@@ -9,9 +9,11 @@ import { AnalysisInterface } from "@/components/strategy/AnalysisInterface";
 import { calculateBasicStats, identifyTrends } from "@/lib/analysis";
 import { DataPoint } from "@shared/schema";
 import { BarChart3, LogOut, TrendingUp, Trophy, Upload } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function HomePage() {
   const { logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
 
   const { data: dataPoints = [] } = useQuery<DataPoint[]>({
     queryKey: ["/api/data-points"],
@@ -30,12 +32,20 @@ export default function HomePage() {
     churn: "Implement targeted win-back campaigns with 20% success rate"
   };
 
+  const handleLogout = async () => {
+    await logoutMutation.mutateAsync();
+    setLocation("/");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-xl font-bold">Marketing Campaign Dashboard</h1>
-          <Button variant="ghost" onClick={() => logoutMutation.mutate()}>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-bold">Marketing Campaign Dashboard</h1>
+          </div>
+          <Button variant="ghost" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>

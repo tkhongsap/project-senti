@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { TrendingUp } from "lucide-react";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  
+
   const loginForm = useForm({
     resolver: zodResolver(insertUserSchema),
     defaultValues: { username: "", password: "" }
@@ -24,20 +25,28 @@ export default function AuthPage() {
   });
 
   if (user) {
-    return <Redirect to="/" />;
+    return <Redirect to="/dashboard" />;
   }
 
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
         <Card className="w-[400px]">
-          <CardContent className="pt-6">
+          <div className="p-6 pb-2 flex justify-center">
+            <Link href="/">
+              <div className="flex items-center gap-2 cursor-pointer">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                <span className="font-bold text-xl">Campaign Manager</span>
+              </div>
+            </Link>
+          </div>
+          <CardContent className="pt-4">
             <Tabs defaultValue="login">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="login">
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
@@ -113,7 +122,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="hidden lg:flex flex-1 bg-primary items-center justify-center text-primary-foreground">
         <div className="max-w-md p-8">
           <h1 className="text-4xl font-bold mb-4">Marketing Campaign Manager</h1>
