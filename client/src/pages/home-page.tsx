@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DataGrid } from "@/components/dashboard/data-grid";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
-import { StrategyConversationInterface } from "@/components/strategy/StrategyConversationInterface";
+import { StrategyWizard } from "@/components/strategy/StrategyWizard";
 import { AnalysisInterface } from "@/components/strategy/AnalysisInterface";
 import {
   calculateBasicStats,
@@ -359,7 +359,7 @@ export default function HomePage() {
 
         {activeTab === "strategy" && (
           <div className="space-y-6">
-            <StrategyConversationInterface />
+            <StrategyWizard />
           </div>
         )}
 
