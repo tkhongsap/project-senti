@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, ChevronRight, Upload, CheckCircle, Network, Database, FileText, AlertCircle, X, ChevronDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Send, ChevronRight, Upload, CheckCircle, Network, Database, FileText, AlertCircle, X, ChevronDown, ArrowRight, RefreshCw, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { uploadCSVData } from "@/lib/data-ingestion";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type LifecycleStage = 'prospecting' | 'ownership' | 'inlife' | 'risky' | 'churn';
 type Message = {
@@ -254,94 +257,91 @@ export function StrategyConversationInterface() {
   };
 
   const renderSourceTabs = () => (
-    <div className="flex space-x-4 mb-6">
-      <button 
-        className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'file' ? 'border-primary bg-primary/10' : 'border-border'}`}
-        onClick={() => setActiveTab('file')}
-      >
-        <FileText className={activeTab === 'file' ? 'text-primary' : 'text-muted-foreground'} />
-        <div className="text-left">
-          <p className={`font-medium ${activeTab === 'file' ? 'text-primary' : 'text-foreground'}`}>File Upload</p>
-          <p className="text-xs text-muted-foreground">CSV, Excel, JSON</p>
+    <div className="mb-4">
+      <Tabs defaultValue="file" value={activeTab} onValueChange={(value) => setActiveTab(value as 'file' | 'api' | 'database')}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="file" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" /> 
+            <span className="hidden sm:inline">File Upload</span>
+            <span className="sm:hidden">File</span>
+          </TabsTrigger>
+          <TabsTrigger value="api" className="flex items-center gap-2">
+            <Network className="h-4 w-4" /> 
+            <span className="hidden sm:inline">API Connection</span>
+            <span className="sm:hidden">API</span>
+          </TabsTrigger>
+          <TabsTrigger value="database" className="flex items-center gap-2">
+            <Database className="h-4 w-4" /> 
+            <span className="hidden sm:inline">Database</span>
+            <span className="sm:hidden">DB</span>
+          </TabsTrigger>
+        </TabsList>
+        <div className="mt-2 text-xs text-muted-foreground text-center">
+          {activeTab === 'file' && "Support for CSV, Excel, and JSON formats"}
+          {activeTab === 'api' && "Connect to REST or GraphQL endpoints"}
+          {activeTab === 'database' && "Connect to SQL or NoSQL databases"}
         </div>
-      </button>
-
-      <button 
-        className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'api' ? 'border-primary bg-primary/10' : 'border-border'}`}
-        onClick={() => setActiveTab('api')}
-      >
-        <Network className={activeTab === 'api' ? 'text-primary' : 'text-muted-foreground'} />
-        <div className="text-left">
-          <p className={`font-medium ${activeTab === 'api' ? 'text-primary' : 'text-foreground'}`}>API Connection</p>
-          <p className="text-xs text-muted-foreground">REST, GraphQL</p>
-        </div>
-      </button>
-
-      <button 
-        className={`flex items-center space-x-2 p-4 rounded-lg border-2 ${activeTab === 'database' ? 'border-primary bg-primary/10' : 'border-border'}`}
-        onClick={() => setActiveTab('database')}
-      >
-        <Database className={activeTab === 'database' ? 'text-primary' : 'text-muted-foreground'} />
-        <div className="text-left">
-          <p className={`font-medium ${activeTab === 'database' ? 'text-primary' : 'text-foreground'}`}>Database</p>
-          <p className="text-xs text-muted-foreground">SQL, NoSQL</p>
-        </div>
-      </button>
+      </Tabs>
     </div>
   );
 
   const renderFileUpload = () => {
     if (uploadedFiles.length > 0 && uploadStatus) {
       return (
-        <div className="p-4 bg-muted rounded-lg">
-          {uploadedFiles.map((file, index) => (
-            <div key={index} className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-medium">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / 1024).toFixed(1)} KB
-                </p>
-              </div>
-              {uploadStatus === 'processing' ? (
-                <div className="animate-spin">
-                  <Upload className="h-4 w-4" />
+        <div className="p-3 bg-muted/50 rounded-lg border border-border/50">
+          <div className="flex flex-col space-y-2">
+            {uploadedFiles.map((file, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="font-medium text-sm">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(file.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
                 </div>
-              ) : uploadStatus === 'complete' ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : null}
-            </div>
-          ))}
+                {uploadStatus === 'processing' ? (
+                  <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                ) : uploadStatus === 'complete' ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : null}
+              </div>
+            ))}
+          </div>
 
           {uploadStatus === 'processing' && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Processing</span>
-                <span>{uploadProgress}%</span>
+            <div className="mt-3 space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="font-medium">Processing file</span>
+                <span className="font-medium">{uploadProgress}%</span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2">
+              <div className="w-full bg-secondary rounded-full h-1.5">
                 <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  className="bg-primary h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
             </div>
           )}
 
-          {validationResults.map((result, index) => (
-            <div key={index} className="flex items-center mt-2">
-              {result.type === 'success' && <CheckCircle className="h-4 w-4 text-green-500 mr-2" />}
-              {result.type === 'warning' && <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />}
-              {result.type === 'info' && <AlertCircle className="h-4 w-4 text-blue-500 mr-2" />}
-              <span className="text-sm">{result.message}</span>
-            </div>
-          ))}
+          <div className="mt-3 grid grid-cols-1 gap-1.5">
+            {validationResults.map((result, index) => (
+              <div key={index} className="flex items-center">
+                {result.type === 'success' && <CheckCircle className="h-3 w-3 text-green-500 mr-1.5" />}
+                {result.type === 'warning' && <AlertCircle className="h-3 w-3 text-yellow-500 mr-1.5" />}
+                {result.type === 'info' && <AlertCircle className="h-3 w-3 text-blue-500 mr-1.5" />}
+                <span className="text-xs">{result.message}</span>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
 
     return (
       <div 
-        className={`border-2 border-dashed rounded-lg p-8 text-center ${dragActive ? 'border-primary bg-primary/10' : 'border-border'}`}
+        className={`border border-dashed rounded-lg p-4 flex flex-col items-center justify-center h-[140px] ${dragActive ? 'border-primary bg-primary/5' : 'border-border'}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -355,23 +355,20 @@ export function StrategyConversationInterface() {
           className="hidden"
         />
 
-        <Upload className={`h-12 w-12 mx-auto mb-4 ${dragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+        <Upload className={`h-8 w-8 mb-2 ${dragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+        
+        <div className="text-center mb-3">
+          <h3 className="text-sm font-medium mb-1">
+            {dragActive ? 'Drop file here' : 'Drag & drop file here'}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            CSV, Excel, or JSON (Max 50MB)
+          </p>
+        </div>
 
-        <h3 className="text-lg font-semibold mb-2">
-          {dragActive ? 'Drop your file here' : 'Drag & drop your file here'}
-        </h3>
-
-        <p className="text-muted-foreground mb-4">
-          Support for CSV, Excel, and JSON formats
-        </p>
-
-        <Button onClick={() => fileInputRef.current?.click()}>
+        <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
           Browse Files
         </Button>
-
-        <p className="text-xs text-muted-foreground mt-4">
-          Maximum file size: 50MB
-        </p>
       </div>
     );
   };
@@ -379,38 +376,56 @@ export function StrategyConversationInterface() {
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">Strategy Assistant</CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="h-8 w-8 p-0"
-        >
-          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </Button>
+        <div>
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            Strategy Assistant
+          </CardTitle>
+          <CardDescription>AI-powered campaign strategy development</CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={activeStep === 'strategy' ? "default" : "outline"} className="h-6">
+            Strategy
+          </Badge>
+          <ArrowRight className="h-3 w-3 text-muted-foreground" />
+          <Badge variant={activeStep === 'ingestion' ? "default" : "outline"} className="h-6">
+            Data Ingestion
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="h-8 w-8 p-0 ml-2"
+          >
+            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+        </div>
       </CardHeader>
+      
       {isExpanded && (
-        <CardContent>
-          <div className="flex items-center mb-6">
-            <div className={`flex items-center ${activeStep === 'strategy' ? 'text-primary' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'strategy' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-                <span className="font-semibold">1</span>
-              </div>
-              <span className="ml-2 font-medium">Strategy</span>
-            </div>
-
-            <ChevronRight className="mx-4 text-muted-foreground" />
-
-            <div className={`flex items-center ${activeStep === 'ingestion' ? 'text-primary' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'ingestion' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-                <span className="font-semibold">2</span>
-              </div>
-              <span className="ml-2 font-medium">Data Ingestion</span>
-            </div>
-          </div>
+        <CardContent className="p-4">
+          <Tabs value={activeStep} className="mb-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger 
+                value="strategy" 
+                className="data-[state=active]:bg-primary/10"
+                onClick={() => activeStep === "ingestion" && setActiveStep("strategy")}
+              >
+                Strategy Development
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ingestion"
+                className="data-[state=active]:bg-primary/10"
+                onClick={() => activeStep === "strategy" && allObjectivesDefined && setActiveStep("ingestion")}
+              >
+                Data Ingestion
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           <div className="flex gap-4 flex-1 overflow-hidden">
-            <div className="w-64 space-y-2 overflow-y-auto">
+            {/* Lifecycle stages sidebar - hidden on mobile */}
+            <div className="w-52 min-w-52 space-y-2 bg-muted/30 p-2 rounded-lg hidden sm:block">
               {(Object.keys(lifecycleStages) as LifecycleStage[]).map((stage) => (
                 <div
                   key={stage}
@@ -440,34 +455,66 @@ export function StrategyConversationInterface() {
               ))}
             </div>
 
+            {/* Main conversation area */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
+              {/* Messages scroll area */}
+              <ScrollArea className="flex-1 pr-4 h-[300px]">
+                <div className="space-y-3 mb-4">
+                  {messages.map((message, index) => (
                     <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.sender === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : message.sender === 'ingestion'
-                          ? 'bg-green-100 border border-green-200'
-                          : 'bg-muted border border-border'
-                      }`}
+                      key={index}
+                      className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       {message.sender !== 'user' && (
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {message.sender === 'ingestion' ? 'Ingestion Agent' : 'Strategy Agent'}
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+                          {message.sender === 'ingestion' ? 
+                            <Database className="h-4 w-4 text-primary" /> : 
+                            <MessageSquare className="h-4 w-4 text-primary" />
+                          }
                         </div>
                       )}
-                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
+                          message.sender === 'user'
+                            ? 'bg-primary text-primary-foreground rounded-tr-none'
+                            : message.sender === 'ingestion'
+                            ? 'bg-green-100 border border-green-200 rounded-tl-none'
+                            : 'bg-muted/70 border border-border rounded-tl-none'
+                        }`}
+                      >
+                        {message.sender !== 'user' && (
+                          <div className="text-xs font-medium text-primary mb-1">
+                            {message.sender === 'ingestion' ? 'Ingestion Agent' : 'Strategy Agent'}
+                          </div>
+                        )}
+                        <div className="whitespace-pre-wrap text-sm">
+                          {message.content.includes('**') 
+                            ? message.content.split('\n\n').map((paragraph, i) => {
+                                if (paragraph.startsWith('**') && paragraph.includes(':**')) {
+                                  const [title, content] = paragraph.split(':**');
+                                  return (
+                                    <div key={i} className="mb-1">
+                                      <span className="font-semibold">{title.replace('**', '')}:</span>
+                                      <span>{content}</span>
+                                    </div>
+                                  );
+                                }
+                                return <p key={i} className="mb-1">{paragraph}</p>;
+                              })
+                            : message.content
+                          }
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 text-right">
+                          {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
 
+              {/* Data ingestion controls */}
               {activeStep === 'ingestion' && (
                 <div className="mb-4">
                   {renderSourceTabs()}
@@ -475,6 +522,7 @@ export function StrategyConversationInterface() {
                 </div>
               )}
 
+              {/* Message input */}
               <form onSubmit={handleSendMessage} className="flex gap-2">
                 <Input
                   value={userInput}
