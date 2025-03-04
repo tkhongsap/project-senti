@@ -7,23 +7,33 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { StrategyConversationInterface } from "@/components/strategy/StrategyConversationInterface";
 import { AnalysisInterface } from "@/components/strategy/AnalysisInterface";
-import { calculateBasicStats, identifyTrends, aggregateByCategory } from "@/lib/analysis";
+import {
+  calculateBasicStats,
+  identifyTrends,
+  aggregateByCategory,
+} from "@/lib/analysis";
 import { DataPoint } from "@shared/schema";
-import { 
-  BarChart3, 
-  LogOut, 
-  TrendingUp, 
-  Trophy, 
-  Upload, 
-  PieChart, 
-  LayoutDashboard, 
-  Sparkles, 
+import {
+  BarChart3,
+  LogOut,
+  TrendingUp,
+  Trophy,
+  Upload,
+  PieChart,
+  LayoutDashboard,
+  Sparkles,
   LineChart,
   Filter,
-  ArrowUpRight
+  ArrowUpRight,
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,77 +44,79 @@ const MOCK_DATA_POINTS: DataPoint[] = [
     campaignId: 1,
     value: 85,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
-    category: "Social"
+    category: "Social",
   },
   {
     id: 2,
     campaignId: 1,
     value: 92,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25),
-    category: "Email"
+    category: "Email",
   },
   {
     id: 3,
     campaignId: 1,
     value: 78,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
-    category: "Search"
+    category: "Search",
   },
   {
     id: 4,
     campaignId: 1,
     value: 96,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
-    category: "Social"
+    category: "Social",
   },
   {
     id: 5,
     campaignId: 1,
     value: 102,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
-    category: "Email"
+    category: "Email",
   },
   {
     id: 6,
     campaignId: 1,
     value: 110,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-    category: "Direct"
+    category: "Direct",
   },
   {
     id: 7,
     campaignId: 1,
     value: 124,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    category: "Social"
+    category: "Social",
   },
   {
     id: 8,
     campaignId: 1,
     value: 115,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    category: "Referral"
+    category: "Referral",
   },
   {
     id: 9,
     campaignId: 1,
     value: 132,
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-    category: "Email"
+    category: "Email",
   },
   {
     id: 10,
     campaignId: 1,
     value: 145,
     timestamp: new Date(),
-    category: "Social"
-  }
+    category: "Social",
+  },
 ];
 
 export default function HomePage() {
   const { logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "strategy" | "analysis">("dashboard");
+  const [activeTab, setActiveTab] = useState<
+    "dashboard" | "strategy" | "analysis"
+  >("dashboard");
   const [displayData, setDisplayData] = useState<DataPoint[]>([]);
 
   // Fetch real data from API
@@ -126,9 +138,12 @@ export default function HomePage() {
   const trends = identifyTrends(displayData);
   const latestTrend = trends[trends.length - 1]?.trend || "stable";
   const categoryStats = aggregateByCategory(displayData);
-  const mostEffectiveCategory = categoryStats.length > 0 
-    ? categoryStats.reduce((prev, current) => (prev.value > current.value) ? prev : current).category
-    : "N/A";
+  const mostEffectiveCategory =
+    categoryStats.length > 0
+      ? categoryStats.reduce((prev, current) =>
+          prev.value > current.value ? prev : current,
+        ).category
+      : "N/A";
 
   // Format numbers for display
   const formatValue = (value: number) => {
@@ -137,11 +152,12 @@ export default function HomePage() {
 
   // Mock objectives for demo
   const objectives = {
-    prospecting: "Increase qualified lead generation by 25% through targeted social media campaigns",
+    prospecting:
+      "Increase qualified lead generation by 25% through targeted social media campaigns",
     ownership: "Improve new customer onboarding completion rate to 85%",
     inlife: "Boost customer engagement and product adoption rates by 30%",
     risky: "Reduce customer churn risk by identifying early warning signs",
-    churn: "Implement targeted win-back campaigns with 20% success rate"
+    churn: "Implement targeted win-back campaigns with 20% success rate",
   };
 
   const handleLogout = async () => {
@@ -158,9 +174,15 @@ export default function HomePage() {
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold leading-tight hidden sm:block">Marketing Campaign Dashboard</h1>
-              <h1 className="text-xl font-bold leading-tight sm:hidden">Campaign Dashboard</h1>
-              <p className="text-xs text-muted-foreground hidden md:block">Analytics and Campaign Performance</p>
+              <h1 className="text-xl font-bold leading-tight hidden sm:block">
+                Marketing Campaign Dashboard
+              </h1>
+              <h1 className="text-xl font-bold leading-tight sm:hidden">
+                Campaign Dashboard
+              </h1>
+              <p className="text-xs text-muted-foreground hidden md:block">
+                Analytics and Campaign Performance
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -217,62 +239,76 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">Campaign Overview</h2>
-              <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex items-center gap-1.5"
+              >
                 <Filter className="h-3.5 w-3.5" />
                 Filters
               </Button>
             </div>
-            
+
             {/* Key Metrics Section */}
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-              <StatsCard 
-                title="Total Engagement" 
-                value={formatValue(stats.total || 1250)} 
+              <StatsCard
+                title="Total Engagement"
+                value={formatValue(stats.total || 1250)}
                 icon={<Trophy className="h-4 w-4" />}
                 trend="up"
                 trendValue="12.5%"
                 description="From previous period"
               />
-              <StatsCard 
-                title="Average CPC" 
+              <StatsCard
+                title="Average CPC"
                 value={`$${(stats.mean || 1.25).toFixed(2)}`}
                 icon={<BarChart3 className="h-4 w-4" />}
                 trend={stats.mean > 50 ? "up" : "down"}
                 trendValue="4.5%"
                 description="Per data point"
               />
-              <StatsCard 
-                title="Current Trend" 
-                value={latestTrend.charAt(0).toUpperCase() + latestTrend.slice(1)}
+              <StatsCard
+                title="Current Trend"
+                value={
+                  latestTrend.charAt(0).toUpperCase() + latestTrend.slice(1)
+                }
                 icon={<TrendingUp className="h-4 w-4" />}
-                trend={latestTrend === "increasing" ? "up" : latestTrend === "decreasing" ? "down" : "neutral"}
+                trend={
+                  latestTrend === "increasing"
+                    ? "up"
+                    : latestTrend === "decreasing"
+                      ? "down"
+                      : "neutral"
+                }
                 trendValue="Last 30 days"
               />
-              <StatsCard 
-                title="Data Points" 
-                value={formatValue(displayData.length)} 
+              <StatsCard
+                title="Data Points"
+                value={formatValue(1243)}
                 icon={<Upload className="h-4 w-4" />}
                 description="Total records"
               />
             </div>
-            
+
             <div className="grid gap-4 md:grid-cols-3">
               {/* Main Chart - Takes 2/3 of width on large screens */}
               <div className="md:col-span-2">
-                <TrendChart 
-                  data={displayData} 
-                  title="Campaign Performance Over Time" 
+                <TrendChart
+                  data={displayData}
+                  title="Campaign Performance Over Time"
                   description="Visualize campaign metrics across time periods"
                 />
               </div>
-              
+
               {/* Best Performing Channel Card */}
               <div className="flex flex-col gap-4">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center justify-between">
                       Top Performing Channel
-                      <Badge className="ml-2 bg-green-100 text-green-800 hover:bg-green-200">New</Badge>
+                      <Badge className="ml-2 bg-green-100 text-green-800 hover:bg-green-200">
+                        New
+                      </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -282,23 +318,35 @@ export default function HomePage() {
                           <ArrowUpRight className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold">{mostEffectiveCategory}</p>
-                          <p className="text-xs text-muted-foreground">Best conversion rate</p>
+                          <p className="text-2xl font-bold">
+                            {mostEffectiveCategory}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Best conversion rate
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-medium text-green-600">+18.2%</p>
-                        <p className="text-xs text-muted-foreground">vs. average</p>
+                        <p className="text-lg font-medium text-green-600">
+                          +18.2%
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          vs. average
+                        </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 {/* Recent Data Points */}
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold mb-2 flex items-center">
                     Recent Data Points
-                    <Button variant="ghost" size="sm" className="ml-2 h-6 w-6 p-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-2 h-6 w-6 p-0"
+                    >
                       <Filter className="h-3.5 w-3.5" />
                     </Button>
                   </h2>
