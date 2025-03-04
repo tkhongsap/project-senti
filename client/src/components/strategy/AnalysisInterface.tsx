@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AnalysisInterfaceProps {
   objectives: Record<string, string>;
@@ -26,7 +27,7 @@ export function AnalysisInterface({ objectives }: AnalysisInterfaceProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [userInput, setUserInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Color schemes for different lifecycle stages
   const stageColors = {
@@ -395,84 +396,76 @@ export function AnalysisInterface({ objectives }: AnalysisInterfaceProps) {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader>
-        <CardTitle>Campaign Analysis</CardTitle>
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-lg font-semibold">Campaign Analysis</CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="h-8 w-8 p-0"
+        >
+          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </Button>
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto space-y-6">
-        {generatingInsights ? (
-          <div className="flex flex-col items-center justify-center h-full space-y-4">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
-              <div 
-                className="absolute inset-0 border-4 border-primary rounded-full animate-spin" 
-                style={{ 
-                  clipPath: `polygon(50% 50%, 50% 0%, ${50 + insightsProgress/2}% 0%, ${50 + insightsProgress}% ${insightsProgress}%)` 
-                }}
-              />
-            </div>
-            <p className="text-lg font-medium">Analyzing Campaign Data</p>
-            <p className="text-sm text-muted-foreground">Generating insights across customer lifecycle stages...</p>
-            <p className="text-sm font-medium">{insightsProgress}%</p>
-          </div>
-        ) : (
-          <>
-            {renderTopStats()}
-            {renderCustomerJourney()}
-            {renderSegmentDistribution()}
-            {renderInsights()}
-          </>
-        )}
-      </CardContent>
-
-      {/* Analysis Assistant Chat */}
-      {showConversation && (
-        <div className="fixed bottom-4 right-4 w-96 bg-card rounded-lg shadow-lg overflow-hidden">
-          <div 
-            className="bg-primary p-3 flex justify-between items-center cursor-pointer"
-            onClick={() => setShowConversation(!showConversation)}
-          >
-            <div className="flex items-center text-primary-foreground">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              <h3 className="font-medium">Analysis Assistant</h3>
-            </div>
-            <ChevronDown className="h-4 w-4 text-primary-foreground" />
-          </div>
-
-          <div className="p-4 h-96 flex flex-col">
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.sender === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    {message.content}
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-              <Input
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Ask about your campaign analysis..."
-                className="flex-1"
-              />
-              <Button type="submit" size="icon">
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
-        </div>
+      
+      {isExpanded && (
+        <CardContent>
+          <Tabs defaultValue="performance">
+            <TabsList className="mb-4">
+              <TabsTrigger value="performance">Performance</TabsTrigger>
+              <TabsTrigger value="trends">Trends</TabsTrigger>
+              <TabsTrigger value="objectives">Objectives</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="performance" className="space-y-4">
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={customerJourneyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    {Object.entries(stageColors).map(([stage, color]) => (
+                      <Bar key={stage} dataKey={stage} fill={color} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="trends" className="space-y-4">
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={churnRateData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="rate" stroke="hsl(var(--primary))" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="objectives" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(objectives).map(([stage, objective]) => (
+                  <Card key={stage} className="overflow-hidden">
+                    <CardHeader className="bg-primary/5 py-2">
+                      <CardTitle className="text-sm font-medium capitalize">{stage}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 text-sm">
+                      {objective}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       )}
     </Card>
   );

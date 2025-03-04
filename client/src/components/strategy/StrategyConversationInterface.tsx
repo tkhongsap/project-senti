@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, ChevronRight, Upload, CheckCircle, Network, Database, FileText, AlertCircle, X } from 'lucide-react';
+import { Send, ChevronRight, Upload, CheckCircle, Network, Database, FileText, AlertCircle, X, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { uploadCSVData } from "@/lib/data-ingestion";
+import { cn } from "@/lib/utils";
 
 type LifecycleStage = 'prospecting' | 'ownership' | 'inlife' | 'risky' | 'churn';
 type Message = {
@@ -43,6 +44,7 @@ export function StrategyConversationInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const lifecycleStages: Record<LifecycleStage, string> = {
     prospecting: `Attracting and engaging potential customers who aren't yet customers`,
@@ -375,117 +377,124 @@ export function StrategyConversationInterface() {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader>
-        <CardTitle>Campaign Strategy Development</CardTitle>
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-lg font-semibold">Strategy Assistant</CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="h-8 w-8 p-0"
+        >
+          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </Button>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col overflow-hidden">
-        {/* Progress Steps */}
-        <div className="flex items-center mb-6">
-          <div className={`flex items-center ${activeStep === 'strategy' ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'strategy' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-              <span className="font-semibold">1</span>
-            </div>
-            <span className="ml-2 font-medium">Strategy</span>
-          </div>
-
-          <ChevronRight className="mx-4 text-muted-foreground" />
-
-          <div className={`flex items-center ${activeStep === 'ingestion' ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'ingestion' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-              <span className="font-semibold">2</span>
-            </div>
-            <span className="ml-2 font-medium">Data Ingestion</span>
-          </div>
-        </div>
-
-        <div className="flex gap-4 flex-1 overflow-hidden">
-          {/* Left Panel - Lifecycle Stages */}
-          <div className="w-64 space-y-2 overflow-y-auto">
-            {(Object.keys(lifecycleStages) as LifecycleStage[]).map((stage) => (
-              <div
-                key={stage}
-                className={`p-3 rounded-lg border ${
-                  stage === currentLifecycleStage
-                    ? 'bg-primary/10 border-primary'
-                    : objectives[stage]
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-muted border-border'
-                }`}
-              >
-                <div className="flex items-start">
-                  {objectives[stage] && (
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                  )}
-                  <div>
-                    <h3 className="font-medium capitalize">{stage}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{lifecycleStages[stage]}</p>
-                    {objectives[stage] && (
-                      <p className="text-xs text-primary mt-1 italic">
-                        "{objectives[stage].substring(0, 60)}..."
-                      </p>
-                    )}
-                  </div>
-                </div>
+      {isExpanded && (
+        <CardContent>
+          <div className="flex items-center mb-6">
+            <div className={`flex items-center ${activeStep === 'strategy' ? 'text-primary' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'strategy' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
+                <span className="font-semibold">1</span>
               </div>
-            ))}
+              <span className="ml-2 font-medium">Strategy</span>
+            </div>
+
+            <ChevronRight className="mx-4 text-muted-foreground" />
+
+            <div className={`flex items-center ${activeStep === 'ingestion' ? 'text-primary' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activeStep === 'ingestion' ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
+                <span className="font-semibold">2</span>
+              </div>
+              <span className="ml-2 font-medium">Data Ingestion</span>
+            </div>
           </div>
 
-          {/* Right Panel - Chat Interface & Data Ingestion */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-              {messages.map((message, index) => (
+          <div className="flex gap-4 flex-1 overflow-hidden">
+            <div className="w-64 space-y-2 overflow-y-auto">
+              {(Object.keys(lifecycleStages) as LifecycleStage[]).map((stage) => (
                 <div
-                  key={index}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  key={stage}
+                  className={`p-3 rounded-lg border ${
+                    stage === currentLifecycleStage
+                      ? 'bg-primary/10 border-primary'
+                      : objectives[stage]
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-muted border-border'
+                  }`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.sender === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : message.sender === 'ingestion'
-                        ? 'bg-green-100 border border-green-200'
-                        : 'bg-muted border border-border'
-                    }`}
-                  >
-                    {message.sender !== 'user' && (
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {message.sender === 'ingestion' ? 'Ingestion Agent' : 'Strategy Agent'}
-                      </div>
+                  <div className="flex items-start">
+                    {objectives[stage] && (
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
                     )}
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    <div>
+                      <h3 className="font-medium capitalize">{stage}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{lifecycleStages[stage]}</p>
+                      {objectives[stage] && (
+                        <p className="text-xs text-primary mt-1 italic">
+                          "{objectives[stage].substring(0, 60)}..."
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
-              <div ref={messagesEndRef} />
             </div>
 
-            {activeStep === 'ingestion' && (
-              <div className="mb-4">
-                {renderSourceTabs()}
-                {activeTab === 'file' && renderFileUpload()}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                        message.sender === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : message.sender === 'ingestion'
+                          ? 'bg-green-100 border border-green-200'
+                          : 'bg-muted border border-border'
+                      }`}
+                    >
+                      {message.sender !== 'user' && (
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {message.sender === 'ingestion' ? 'Ingestion Agent' : 'Strategy Agent'}
+                        </div>
+                      )}
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
               </div>
-            )}
 
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <Input
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder={
-                  activeStep === 'strategy'
-                    ? allObjectivesDefined
-                      ? "Type 'yes' to proceed or clarify any objectives..."
-                      : `Enter your objectives for the ${currentLifecycleStage} stage...`
-                    : "Respond to the ingestion agent..."
-                }
-              />
-              <Button type="submit" size="icon">
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
+              {activeStep === 'ingestion' && (
+                <div className="mb-4">
+                  {renderSourceTabs()}
+                  {activeTab === 'file' && renderFileUpload()}
+                </div>
+              )}
+
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <Input
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder={
+                    activeStep === 'strategy'
+                      ? allObjectivesDefined
+                        ? "Type 'yes' to proceed or clarify any objectives..."
+                        : `Enter your objectives for the ${currentLifecycleStage} stage...`
+                      : "Respond to the ingestion agent..."
+                  }
+                />
+                <Button type="submit" size="icon">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 }
