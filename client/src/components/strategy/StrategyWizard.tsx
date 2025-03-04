@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,8 +113,7 @@ export function StrategyWizard() {
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const objectivesForm = useForm<CampaignObjectives>();
-  const audienceForm = useForm<Audience>();
+  // Define form state management without using react-hook-form
 
   // Define lifecycle stages
   const lifecycleStages: Record<LifecycleStage, string> = {
@@ -241,28 +239,61 @@ export function StrategyWizard() {
   };
 
   // Handle objectives form submission
-  const handleObjectivesSubmit = (data: CampaignObjectives) => {
-    setCampaignObjectives(data);
+  const handleObjectivesSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Handle form data directly
+    const formData = {
+      name: campaignObjectives.name,
+      description: campaignObjectives.description,
+      kpi: campaignObjectives.kpi,
+      budget: campaignObjectives.budget,
+      timeline: campaignObjectives.timeline
+    };
+    
+    // Validate required fields
+    if (!formData.name || !formData.description || !formData.kpi) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Update state and proceed
+    setCampaignObjectives(formData);
     setCurrentStep('audience');
     
     if (conversationMode) {
       setMessages(prev => [
         ...prev,
-        { text: `I've set my campaign name to "${data.name}" with the primary objective: ${data.description}`, sender: 'user' },
+        { text: `I've set my campaign name to "${formData.name}" with the primary objective: ${formData.description}`, sender: 'user' },
         { text: "Great! Now let's define your target audience. Who are you primarily trying to reach with this campaign?", sender: 'assistant' }
       ]);
     }
   };
 
   // Handle audience form submission
-  const handleAudienceSubmit = (data: Audience) => {
-    setAudience(data);
+  const handleAudienceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!audience.primarySegment || !audience.ageRange || !audience.location) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setCurrentStep('channels');
     
     if (conversationMode) {
       setMessages(prev => [
         ...prev,
-        { text: `My primary audience is ${data.primarySegment} in the ${data.ageRange} age range, located in ${data.location}.`, sender: 'user' },
+        { text: `My primary audience is ${audience.primarySegment} in the ${audience.ageRange} age range, located in ${audience.location}.`, sender: 'user' },
         { text: "Thanks for that information. Now let's specify which marketing channels you plan to use and their priorities.", sender: 'assistant' }
       ]);
     }
@@ -388,7 +419,7 @@ export function StrategyWizard() {
     switch (currentStep) {
       case 'objectives':
         return (
-          <form onSubmit={objectivesForm.handleSubmit(handleObjectivesSubmit)}>
+          <form onSubmit={handleObjectivesSubmit}>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Campaign Name</Label>
@@ -456,7 +487,7 @@ export function StrategyWizard() {
       
       case 'audience':
         return (
-          <form onSubmit={audienceForm.handleSubmit(handleAudienceSubmit)}>
+          <form onSubmit={handleAudienceSubmit}>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="primarySegment">Primary Customer Segment</Label>
@@ -926,34 +957,25 @@ export function StrategyWizard() {
         </CardHeader>
         <CardContent className="pb-4">
           {!conversationMode ? (
-            <Tabs defaultValue={currentStep} className="w-full">
-              <TabsList className="grid grid-cols-5 mb-4">
-                <TabsTrigger value="objectives" disabled={currentStep !== 'objectives'} className="data-[state=active]:bg-primary/10">
-                  <span className="hidden md:inline">Objectives</span>
-                  <span className="md:hidden">1</span>
-                </TabsTrigger>
-                <TabsTrigger value="audience" disabled={currentStep !== 'audience'} className="data-[state=active]:bg-primary/10">
-                  <span className="hidden md:inline">Audience</span>
-                  <span className="md:hidden">2</span>
-                </TabsTrigger>
-                <TabsTrigger value="channels" disabled={currentStep !== 'channels'} className="data-[state=active]:bg-primary/10">
-                  <span className="hidden md:inline">Channels</span>
-                  <span className="md:hidden">3</span>
-                </TabsTrigger>
-                <TabsTrigger value="recommendations" disabled={currentStep !== 'recommendations'} className="data-[state=active]:bg-primary/10">
-                  <span className="hidden md:inline">Recommendations</span>
-                  <span className="md:hidden">4</span>
-                </TabsTrigger>
-                <TabsTrigger value="summary" disabled={currentStep !== 'summary'} className="data-[state=active]:bg-primary/10">
-                  <span className="hidden md:inline">Summary</span>
-                  <span className="md:hidden">5</span>
-                </TabsTrigger>
-              </TabsList>
+            <div className="w-full">
+              <div className="grid grid-cols-5 mb-4 gap-2 p-1 bg-muted rounded-lg">
+                {['objectives', 'audience', 'channels', 'recommendations', 'summary'].map((step, index) => (
+                  <div 
+                    key={step}
+                    className={`text-center py-2 px-3 rounded-md text-sm font-medium
+                      ${currentStep === step ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}
+                    `}
+                  >
+                    <span className="hidden md:inline">{step.charAt(0).toUpperCase() + step.slice(1)}</span>
+                    <span className="md:hidden">{index + 1}</span>
+                  </div>
+                ))}
+              </div>
               
-              <TabsContent value={currentStep}>
+              <div className="mt-6">
                 {renderStepContent()}
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
               <ScrollArea className="h-[400px] md:h-[500px] pr-4">
