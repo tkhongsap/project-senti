@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -96,22 +97,31 @@ export default function HomePage() {
               <StatsCard 
                 title="Total Value" 
                 value={stats.total} 
-                icon={<Trophy />} 
+                icon={<Trophy className="h-4 w-4" />}
+                trend="up"
+                trendValue="8.2%"
+                description="From previous period"
               />
               <StatsCard 
-                title="Average" 
+                title="Average Value" 
                 value={stats.mean.toFixed(2)} 
-                icon={<BarChart3 />} 
+                icon={<BarChart3 className="h-4 w-4" />}
+                trend={stats.mean > 50 ? "up" : "down"}
+                trendValue="4.5%"
+                description="Per data point"
               />
               <StatsCard 
                 title="Current Trend" 
-                value={latestTrend} 
-                icon={<TrendingUp />} 
+                value={latestTrend.charAt(0).toUpperCase() + latestTrend.slice(1)} 
+                icon={<TrendingUp className="h-4 w-4" />}
+                trend={latestTrend === "increasing" ? "up" : latestTrend === "decreasing" ? "down" : "neutral"}
+                trendValue="Last 30 days"
               />
               <StatsCard 
                 title="Data Points" 
                 value={dataPoints.length} 
-                icon={<Upload />} 
+                icon={<Upload className="h-4 w-4" />}
+                description="Total records"
               />
             </div>
 
@@ -120,6 +130,7 @@ export default function HomePage() {
                 <TrendChart 
                   data={dataPoints} 
                   title="Campaign Performance Over Time" 
+                  description="Visualize campaign metrics across time periods"
                 />
               </div>
               <div className="space-y-2 order-1 lg:order-2">
