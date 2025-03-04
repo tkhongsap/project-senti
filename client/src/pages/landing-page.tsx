@@ -9,7 +9,7 @@ export default function LandingPage() {
 
   // If user is already logged in, redirect to dashboard
   if (user) {
-    return <Redirect to="/" />;
+    return <Redirect to="/dashboard" />;
   }
 
   return (
