@@ -23,14 +23,14 @@ export default function LandingPage() {
           </div>
           
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/features">
-              <a className="text-sm font-medium text-slate-700 hover:text-slate-900">Features</a>
+            <Link href="/features" className="text-sm font-medium text-slate-700 hover:text-slate-900">
+              Features
             </Link>
-            <Link href="/how-it-works">
-              <a className="text-sm font-medium text-slate-700 hover:text-slate-900">How It Works</a>
+            <Link href="/how-it-works" className="text-sm font-medium text-slate-700 hover:text-slate-900">
+              How It Works
             </Link>
-            <Link href="/pricing">
-              <a className="text-sm font-medium text-slate-700 hover:text-slate-900">Pricing</a>
+            <Link href="/pricing" className="text-sm font-medium text-slate-700 hover:text-slate-900">
+              Pricing
             </Link>
           </nav>
           
