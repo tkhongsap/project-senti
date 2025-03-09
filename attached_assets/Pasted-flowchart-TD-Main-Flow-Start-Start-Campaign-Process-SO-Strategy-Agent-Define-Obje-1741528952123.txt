@@ -1,0 +1,72 @@
+flowchart TD
+    %% Main Flow
+    Start([Start Campaign Process]) --> SO[Strategy Agent: Define Objectives]
+    SO --> LOD{Are Lifecycle Objectives Defined?}
+    LOD -- No --> SO
+    LOD -- Yes --> IA[Ingestion Agent: Collect & Process Data]
+    IA --> VD{Is Data Valid?}
+    VD -- No --> DF[Fix Data Issues]
+    DF --> IA
+    VD -- Yes --> AA[Analysis Agent: Generate Insights]
+    AA --> CR[Creative Agent: Generate Content]
+    CR --> EA[Execution Agent: Deploy Campaign]
+    EA --> MON[Monitor Campaign]
+    MON --> END([End])
+
+    %% Components of Strategy Definition
+    SO -.-> SO1[Ask for Prospecting Objectives]
+    SO -.-> SO2[Ask for Ownership Experience Objectives]
+    SO -.-> SO3[Ask for Inlife Customer Objectives]
+    SO -.-> SO4[Ask for At-Risk Customer Objectives]
+    SO -.-> SO5[Ask for Churn Management Objectives]
+    SO -.-> SO6[Summarize Objectives]
+
+    %% Components of Data Ingestion
+    IA -.-> IA1[Connect to Data Sources]
+    IA -.-> IA2[Validate Data Quality]
+    IA -.-> IA3[Map Data to Customer Lifecycle]
+    IA -.-> IA4[Segment Customers]
+
+    %% Components of Analysis
+    AA -.-> AA1[Statistical Analysis]
+    AA -.-> AA2[Pattern Detection]
+    AA -.-> AA3[Correlation Analysis]
+    AA -.-> AA4[Anomaly Detection]
+    AA -.-> AA5[Generate Lifecycle-Specific Insights]
+
+    %% Components of Creative Generation
+    CR -.-> CR1[Generate Content for Each Segment]
+    CR -.-> CR2[Adapt Content for Different Channels]
+    CR -.-> CR3[Personalize Messages]
+    CR -.-> CR4[A/B Test Variants]
+
+    %% Components of Execution
+    EA -.-> EA1[Schedule Campaign]
+    EA -.-> EA2[Deploy Across Channels]
+    EA -.-> EA3[Track Performance Metrics]
+    EA -.-> EA4[Optimize in Real-time]
+
+    %% User Interface Components
+    UI1[Strategy Conversation UI] ---> SO
+    UI2[Data Ingestion UI] ---> IA
+    UI3[Analysis Dashboard UI] ---> AA
+    UI4[Creative Content UI] ---> CR
+    UI5[Campaign Execution UI] ---> EA
+
+    %% Style definitions
+    classDef strategy fill:#e6f7ff,stroke:#1890ff;
+    classDef ingestion fill:#f6ffed,stroke:#52c41a;
+    classDef analysis fill:#e6fffb,stroke:#13c2c2;
+    classDef creative fill:#f9f0ff,stroke:#722ed1;
+    classDef execution fill:#fff1f0,stroke:#f5222d;
+    classDef ui fill:#f0f5ff,stroke:#597ef7;
+    classDef flow fill:#fff,stroke:#333,stroke-width:2px;
+
+    %% Apply styles
+    class SO,SO1,SO2,SO3,SO4,SO5,SO6 strategy;
+    class IA,IA1,IA2,IA3,IA4,DF strategy;
+    class AA,AA1,AA2,AA3,AA4,AA5 analysis;
+    class CR,CR1,CR2,CR3,CR4 creative;
+    class EA,EA1,EA2,EA3,EA4,MON execution;
+    class UI1,UI2,UI3,UI4,UI5 ui;
+    class Start,END,LOD,VD flow;
