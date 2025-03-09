@@ -338,18 +338,18 @@ export function StrategyWizardSimple() {
     });
   };
   
-  // Check if all objectives are filled
-  const areAllObjectivesDefined = () => {
-    return Object.values(objectives).every(obj => obj.trim() !== '');
+  // Check if at least one objective is filled
+  const hasAtLeastOneObjective = () => {
+    return Object.values(objectives).some(obj => obj.trim() !== '');
   };
 
   // Handle objective form submission
   const handleStrategySubmit = () => {
-    // Validate objectives
-    if (!areAllObjectivesDefined()) {
+    // Validate objectives - only need one lifecycle stage objective
+    if (!hasAtLeastOneObjective()) {
       toast({
         title: "Missing Objectives",
-        description: "Please define objectives for all customer lifecycle stages",
+        description: "Please define at least one objective for any customer lifecycle stage",
         variant: "destructive"
       });
       return;
@@ -362,7 +362,7 @@ export function StrategyWizardSimple() {
       setMessages(prev => [
         ...prev,
         { 
-          text: "I've defined objectives for all customer lifecycle stages. Let's move to data ingestion.", 
+          text: "I've defined the key objectives for my campaign. Let's move to data ingestion.", 
           sender: 'user' 
         },
         { 
@@ -375,24 +375,18 @@ export function StrategyWizardSimple() {
 
   // Handle ingestion form submission
   const handleIngestionSubmit = () => {
-    // Validate data sources
-    if (ingestData.dataSources.length === 0) {
-      toast({
-        title: "Missing Data Sources",
-        description: "Please add at least one data source",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Move to next step
+    // Move to next step - no validation required, user can proceed with default data
     setCurrentStep('analysis');
     
     if (conversationMode) {
+      const messageText = ingestData.dataSources.length > 0 
+        ? `I've added ${ingestData.dataSources.length} data sources for this campaign.`
+        : "I'd like to proceed with the default data sources.";
+        
       setMessages(prev => [
         ...prev,
         { 
-          text: `I've added ${ingestData.dataSources.length} data sources for this campaign.`, 
+          text: messageText, 
           sender: 'user' 
         },
         { 
@@ -405,14 +399,16 @@ export function StrategyWizardSimple() {
 
   // Handle analysis form submission
   const handleAnalysisSubmit = () => {
-    // Make sure analysis is complete
+    // If analysis is not finished, show a warning but allow proceeding
     if (!analysisFinished) {
       toast({
-        title: "Analysis in Progress",
-        description: "Please wait for the analysis to complete",
-        variant: "destructive"
+        title: "Analysis Not Complete",
+        description: "The analysis is still in progress, but you can continue if you wish"
       });
-      return;
+      
+      // Force analysis to complete so recommendations can be generated
+      setAnalysisFinished(true);
+      setGenerationProgress(100);
     }
     
     // Move to next step
@@ -435,14 +431,16 @@ export function StrategyWizardSimple() {
   
   // Handle creative form submission
   const handleCreativeSubmit = () => {
-    // Make sure we have recommendations
+    // If recommendations aren't generated yet, force them to be generated
     if (recommendations.length === 0) {
       toast({
-        title: "Content Generation in Progress",
-        description: "Please wait for content recommendations to be generated",
-        variant: "destructive"
+        title: "Content Generation",
+        description: "Generating recommendations now. You can proceed immediately."
       });
-      return;
+      
+      // Force generation to complete
+      setGeneratingRecommendations(false);
+      generateMockRecommendations();
     }
     
     // Move to next step
@@ -465,24 +463,18 @@ export function StrategyWizardSimple() {
   
   // Handle execution form submission
   const handleExecutionSubmit = () => {
-    // Validate campaign name
-    if (!campaignName) {
-      toast({
-        title: "Missing Campaign Name",
-        description: "Please enter a name for your campaign",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Move to next step
+    // Move to next step - no validation required, user can proceed with or without a campaign name
     setCurrentStep('monitor');
     
     if (conversationMode) {
+      const messageText = campaignName 
+        ? `I've named the campaign "${campaignName}" and set up the execution parameters.`
+        : "I've set up the execution parameters for this campaign.";
+        
       setMessages(prev => [
         ...prev,
         { 
-          text: `I've named the campaign "${campaignName}" and set up the execution parameters.`, 
+          text: messageText, 
           sender: 'user' 
         },
         { 
